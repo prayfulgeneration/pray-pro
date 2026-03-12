@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- Background circle -->
+  <circle cx="96" cy="96" r="96" fill="#1e3c72"/>
+  <!-- Subtle radial glow -->
+  <circle cx="96" cy="96" r="75" fill="#1e4a9e" opacity="0.3"/>
+  <!-- Cross vertical bar -->
+  <rect x="85" y="36" width="22" height="120" rx="5" fill="#ffffff"/>
+  <!-- Cross horizontal bar -->
+  <rect x="48" y="73" width="96" height="22" rx="5" fill="#ffffff"/>
+  <!-- Gold accent dots at cross tips -->
+  <circle cx="96" cy="41" r="4" fill="#f59e0b" opacity="0.8"/>
+  <circle cx="96" cy="151" r="4" fill="#f59e0b" opacity="0.8"/>
+  <circle cx="53" cy="84" r="4" fill="#f59e0b" opacity="0.8"/>
+  <circle cx="139" cy="84" r="4" fill="#f59e0b" opacity="0.8"/>
+</svg>

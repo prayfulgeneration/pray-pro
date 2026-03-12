@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Clearing cache...</title>
+<style>
+  body{font-family:system-ui;display:flex;align-items:center;justify-content:center;
+  min-height:100vh;margin:0;background:#0d1f3c;color:#fff;text-align:center}
+  .box{max-width:400px;padding:32px}
+  h1{font-size:1.3rem;margin-bottom:12px}
+  p{font-size:0.9rem;color:rgba(255,255,255,0.7);line-height:1.5}
+  .ok{color:#4ade80;font-weight:700}
+  .spin{display:inline-block;width:28px;height:28px;border:3px solid rgba(255,255,255,0.2);
+  border-top-color:#fbbf24;border-radius:50%;animation:s .7s linear infinite;margin-bottom:12px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head><body>
+<div class="box" id="box">
+  <div class="spin"></div>
+  <h1>Clearing all caches...</h1>
+  <p id="log">Working...</p>
+</div>
+<script>
+(async () => {
+  const log = document.getElementById('log');
+  const steps = [];
+
+  // 1. Unregister ALL service workers
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const r of regs) { await r.unregister(); }
+    steps.push('Service workers unregistered (' + regs.length + ')');
+  } catch (e) { steps.push('SW: ' + e.message); }
+
+  // 2. Delete ALL caches
+  try {
+    const keys = await caches.keys();
+    for (const k of keys) { await caches.delete(k); }
+    steps.push('Caches deleted (' + keys.length + ')');
+  } catch (e) { steps.push('Cache: ' + e.message); }
+
+  // 3. Show result
+  log.innerHTML = steps.map(s => '<div class="ok">✓ ' + s + '</div>').join('')
+    + '<p style="margin-top:16px">Redirecting to clean app in 2 seconds...</p>';
+
+  // 4. Redirect to fresh index.html with cache-busting query string
+  setTimeout(() => {
+    window.location.href = '/index.html?v=' + Date.now();
+  }, 2000);
+})();
+</script>
+</body></html>

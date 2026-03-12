@@ -1,0 +1,3548 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <!--
+    viewport: initial-scale=1 is standard.
+    user-scalable=no removed — iOS ignores it and accessibility tools need zoom.
+    viewport-fit=cover handles iPhone notch / Dynamic Island.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Prayful Generation - Alexandria</title>
+  <meta name="description" content="Bilingual Catholic Daily Gospel and Prayer Reader">
+
+  <!-- ── Theme colour (Android Chrome + Safari tab bar) ── -->
+  <meta name="theme-color" content="#0d1f3c">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Prayful Gen">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
+
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
+  <link rel="icon" type="image/svg+xml" href="./icons/icon-192.svg">
+
+  <!-- Security: Content-Security-Policy
+       Note: frame-ancestors and X-Frame-Options are HTTP-header-only directives
+       and are enforced by netlify.toml — they are intentionally omitted here. -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src  'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+    style-src   'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src    'self' https://fonts.gstatic.com;
+    connect-src 'self'
+                https://feed.evangelizo.org
+                https://api.allorigins.win
+                https://corsproxy.io
+                https://en.wikipedia.org
+                https://ar.wikipedia.org
+                https://*.supabase.co;
+    img-src     'self' data: https://files.evangelizo.org;
+  ">
+  <!-- Security: no referrer leakage to external APIs -->
+  <meta name="referrer" content="no-referrer">
+
+  <!-- Supabase SDK — SRI hash locks this exact version, prevents CDN tampering -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"
+          integrity="sha384-4gGeyPSquYHrZEJmJCQzoCNHpg6DDGf2QladEfZjglbzKQ9rnJtLT7kDFMJS3LIN"
+          crossorigin="anonymous"></script>
+
+  <!-- Google Fonts: Inter (UI) + Playfair Display (headings) + Cormorant Garamond (scripture) + Noto Sans Arabic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN SYSTEM — TOKENS & VARIABLES
+    ═══════════════════════════════════════════ */
+    :root {
+      /* Brand Palette */
+      --navy-950: #070e1b;
+      --navy-900: #0d1f3c;
+      --navy-800: #162d54;
+      --navy-700: #1e3a8a;
+      --navy-600: #2451b0;
+      --navy-400: #5b87d8;
+      --navy-200: #bfcfe8;
+      --navy-100: #dce6f5;
+
+      /* Gold */
+      --gold-800: #78340f;
+      --gold-700: #92400e;
+      --gold-600: #b45309;
+      --gold-500: #d97706;
+      --gold-400: #f59e0b;
+      --gold-300: #fbbf24;
+      --gold-200: #fde68a;
+      --gold-100: #fef3c7;
+      --gold-50:  #fffbeb;
+
+      /* Crimson */
+      --crimson-800: #7f1d1d;
+      --crimson-700: #991b1b;
+      --crimson-600: #dc2626;
+
+      /* Neutral */
+      --neutral-900: #171717;
+      --neutral-700: #404040;
+      --neutral-600: #525252;
+      --neutral-500: #737373;
+      --neutral-400: #a3a3a3;
+      --neutral-300: #d4d4d4;
+      --neutral-200: #e5e5e5;
+      --neutral-100: #f5f5f5;
+      --neutral-50:  #fafafa;
+
+      /* Warm Parchment Backgrounds */
+      --parchment-50:  #fdfcf8;
+      --parchment-100: #faf8f2;
+      --parchment-200: #f5f0e8;
+      --parchment-300: #ede5d4;
+
+      /* Liturgical Season Colors */
+      --season-advent:   #6d28d9;
+      --season-lent:     #7c3aed;
+      --season-easter:   #1e3a8a;
+      --season-ordinary: #15803d;
+      --season-red:      #b91c1c;
+      --season-rose:     #db2777;
+      --season-gold:     #d97706;
+
+      /* Semantic Tokens */
+      --bg-base:      var(--parchment-100);
+      --bg-card:      #ffffff;
+      --text-primary: #0d1f3c;
+      --text-body:    #374151;
+      --text-muted:   #6b7280;
+      --text-faint:   #9ca3af;
+      --border-light: rgba(0,0,0,0.06);
+      --border-med:   rgba(0,0,0,0.10);
+      --border-gold:  rgba(245,158,11,0.35);
+      --border-navy:  rgba(30,58,138,0.18);
+
+      /* Elevation */
+      --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-sm: 0 2px 6px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 14px rgba(0,0,0,0.09), 0 2px 4px rgba(0,0,0,0.05);
+      --shadow-lg: 0 8px 28px rgba(0,0,0,0.11), 0 3px 8px rgba(0,0,0,0.06);
+      --shadow-xl: 0 16px 48px rgba(0,0,0,0.13), 0 6px 16px rgba(0,0,0,0.06);
+      --glow-gold: 0 0 24px rgba(245,158,11,0.18), 0 0 60px rgba(245,158,11,0.06);
+      --glow-navy: 0 0 24px rgba(30,58,138,0.22);
+
+      /* Radius */
+      --r-xs: 6px;  --r-sm: 10px; --r-md: 16px;
+      --r-lg: 22px; --r-xl: 32px; --r-full: 9999px;
+
+      /* Easing */
+      --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-inout:  cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      /* Layout */
+      --nav-h:    68px;
+      --header-h: 72px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0; padding: 0;
+    }
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      scroll-behavior: smooth;
+      /* Prevent iOS rubber-band bounce on the root — let individual sections scroll */
+      overscroll-behavior: none;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      /* dvh (dynamic viewport height) for iOS 15.4+; plain vh as fallback */
+      min-height: 100vh;
+      min-height: 100dvh;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 15% 60%, rgba(180,83,9,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 50% at 85% 20%, rgba(30,58,138,0.04) 0%, transparent 60%);
+    }
+    body[dir="rtl"] { font-family: 'Noto Sans Arabic', 'Arial', sans-serif; }
+
+    /* iOS momentum scrolling for scrollable containers */
+    .tab-pane, .main-content {
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ═══════════════════════════════════════════
+       LOADING OVERLAY
+    ═══════════════════════════════════════════ */
+    #loading {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(250,248,242,0.88);
+      backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center;
+    }
+    #loading.show { display: flex; }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(30,58,138,0.12);
+      border-top-color: var(--navy-700);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════
+       OFFLINE TOAST
+    ═══════════════════════════════════════════ */
+    #offline-toast {
+      position: fixed;
+      top: calc(var(--safe-top) + 82px);
+      left: 50%; transform: translateX(-50%) translateY(-8px);
+      background: var(--gold-600); color: white;
+      padding: 7px 18px; border-radius: var(--r-full);
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em;
+      box-shadow: var(--shadow-md); opacity: 0;
+      transition: all 0.3s var(--ease-out); pointer-events: none; z-index: 1800;
+    }
+    #offline-toast.show {
+      opacity: 1; transform: translateX(-50%) translateY(0);
+    }
+
+    /* ═══════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════ */
+    .app-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+      background: rgba(10, 20, 44, 0.94);
+      backdrop-filter: blur(20px) saturate(200%);
+      -webkit-backdrop-filter: blur(20px) saturate(200%);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: calc(var(--safe-top) + 13px) 18px 13px;
+      max-width: 800px; margin: 0 auto;
+    }
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--gold-400), var(--gold-700));
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 10px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+      flex-shrink: 0;
+    }
+    .brand-logo svg { width: 18px; height: 18px; }
+    .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+    .brand-name {
+      font-size: 0.92rem; font-weight: 700; color: white; letter-spacing: -0.01em;
+    }
+    .brand-city {
+      font-size: 0.64rem; color: rgba(255,255,255,0.45);
+      text-transform: uppercase; letter-spacing: 0.12em; font-weight: 400;
+    }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+
+    /* Language Toggle */
+    .lang-toggle {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--r-full); padding: 3px; display: flex; gap: 2px;
+    }
+    .lang-btn {
+      padding: 5px 11px; border-radius: var(--r-full); border: none;
+      background: transparent; color: rgba(255,255,255,0.5);
+      font-size: 0.7rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s var(--ease-inout); font-family: inherit; letter-spacing: 0.02em;
+    }
+    .lang-btn.active { background: white; color: var(--navy-900); box-shadow: var(--shadow-xs); }
+
+    /* Season Strip */
+    .season-strip {
+      height: 3px; width: 100%;
+      background: linear-gradient(90deg, var(--season-ordinary), transparent);
+      transition: background 0.8s ease;
+    }
+
+    /* ═══════════════════════════════════════════
+       APP BODY
+    ═══════════════════════════════════════════ */
+    .app-body {
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    .main-content {
+      /* Mobile: header top + bottom nav height + safe areas */
+      padding-top:    calc(var(--safe-top) + var(--header-h) + 4px);
+      padding-bottom: calc(var(--nav-h) + var(--safe-bot) + 16px);
+    }
+
+    /* ═══════════════════════════════════════════
+       TAB PANES
+    ═══════════════════════════════════════════ */
+    .tab-pane {
+      display: none; max-width: 800px; margin: 0 auto;
+      padding: 20px 16px;
+    }
+    .tab-pane.active {
+      display: block;
+      animation: fadeUp 0.32s var(--ease-out) both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══════════════════════════════════════════
+       BOTTOM NAVIGATION
+    ═══════════════════════════════════════════ */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;
+      background: rgba(9, 18, 38, 0.96);
+      backdrop-filter: blur(20px) saturate(200%);
+      -webkit-backdrop-filter: blur(20px) saturate(200%);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding-bottom: var(--safe-bot);
+    }
+    .nav-inner {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      height: var(--nav-h); max-width: 800px; margin: 0 auto;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 4px;
+      border: none; background: none; cursor: pointer;
+      color: rgba(255,255,255,0.35);
+      font-family: inherit; font-size: 0.62rem; font-weight: 500;
+      letter-spacing: 0.02em; padding: 6px 4px;
+      transition: color 0.2s var(--ease-inout); position: relative;
+    }
+    .nav-item.active { color: var(--gold-300); }
+    .nav-pill {
+      width: 38px; height: 26px; border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s var(--ease-inout);
+    }
+    .nav-item.active .nav-pill { background: rgba(251,191,36,0.12); }
+    .nav-item svg {
+      width: 20px; height: 20px; stroke: currentColor; fill: none;
+      stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* ═══════════════════════════════════════════
+       BASE CARD
+    ═══════════════════════════════════════════ */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--r-md);
+      padding: 22px 20px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+      position: relative; overflow: hidden;
+    }
+    /* Left accent strip */
+    .card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--navy-700);
+      border-radius: var(--r-xs) 0 0 var(--r-xs);
+    }
+    body[dir="rtl"] .card::before {
+      left: auto; right: 0;
+      border-radius: 0 var(--r-xs) var(--r-xs) 0;
+    }
+    .card.stagger-1 { animation: fadeUp 0.32s var(--ease-out) 0.05s both; }
+    .card.stagger-2 { animation: fadeUp 0.32s var(--ease-out) 0.10s both; }
+    .card.stagger-3 { animation: fadeUp 0.32s var(--ease-out) 0.15s both; }
+    .card.stagger-4 { animation: fadeUp 0.32s var(--ease-out) 0.20s both; }
+    .card.stagger-5 { animation: fadeUp 0.32s var(--ease-out) 0.25s both; }
+
+    /* Gospel Card */
+    .card.gospel {
+      background: linear-gradient(155deg, #fffef9 0%, var(--gold-50) 100%);
+      border-color: var(--border-gold);
+      box-shadow: var(--shadow-md), var(--glow-gold);
+    }
+    .card.gospel::before {
+      background: linear-gradient(180deg, var(--gold-300), var(--gold-600));
+    }
+
+    /* Psalm Card */
+    .card.psalm::before { background: var(--season-ordinary); }
+
+    /* Saint Card */
+    .card.saint {
+      background: linear-gradient(135deg, var(--navy-900) 0%, #1a2d5a 60%, #0f2040 100%);
+      border-color: rgba(255,255,255,0.05);
+      box-shadow: var(--shadow-lg), var(--glow-navy);
+      color: white;
+    }
+    .card.saint::before { display: none; }
+    .card.saint .reading-label { color: rgba(255,255,255,0.45); }
+    .card.saint .reading-body { color: rgba(255,255,255,0.88); font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.8; }
+    .card.saint .reading-body.drop-cap > p:first-of-type::first-letter { color: var(--gold-300); }
+
+    /* Biography card below the saint name card */
+    .card.bio { background: var(--parchment-100); border-color: var(--border-light); }
+    .card.bio .reading-body { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.12rem; line-height: 2; color: var(--text-body); }
+    .card.bio .reading-body p:first-child::first-letter {
+      float: left; font-size: 3.2rem; line-height: 0.75;
+      padding-right: 0.1em; padding-top: 0.06em;
+      color: var(--navy-700); font-family: 'Playfair Display', Georgia, serif; font-weight: 700;
+    }
+    body[dir="rtl"] .card.bio .reading-body p:first-child::first-letter {
+      float: right; padding-right: 0; padding-left: 0.1em;
+    }
+
+    /* ═══════════════════════════════════════════
+       READING TYPOGRAPHY
+    ═══════════════════════════════════════════ */
+    .reading-label {
+      font-size: 0.67rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--text-muted); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .reading-label-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .reading-ref {
+      display: inline-block;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-muted);
+      background: var(--neutral-100);
+      border: 1px solid var(--border-light);
+      border-radius: var(--r-xs);
+      padding: 3px 9px; margin-bottom: 16px;
+    }
+    /* ref tag on dark saint card */
+    .card.saint .reading-ref {
+      color: var(--gold-200);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.14);
+    }
+    /* ref tag for prayer steps */
+    .prayer-step .reading-ref {
+      background: var(--parchment-200);
+      border-color: var(--parchment-300);
+    }
+    .reading-body {
+      font-family: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+      font-size: 1.18rem; line-height: 1.95; color: var(--text-body);
+    }
+    .reading-body p { margin-bottom: 1.35em; }
+    .reading-body p:last-child { margin-bottom: 0; }
+    .reading-body .prayer-line {
+      margin-bottom: 0.5em;
+      white-space: normal;
+    }
+    /* Versicle/response lines (starting with "—") styled like a prayer book */
+    .reading-body .prayer-line.response-line {
+      margin-top: -0.15em;
+      padding-left: 1.2em;
+      color: var(--navy-700);
+      font-style: italic;
+    }
+    [dir="rtl"] .reading-body .prayer-line.response-line {
+      padding-left: 0;
+      padding-right: 1.2em;
+    }
+    .reading-body .antiphon-line {
+      margin: 0.8em 0;
+      padding: 0.55em 0.8em;
+      border-radius: var(--r-sm);
+      background: linear-gradient(135deg, rgba(30,58,138,0.06), rgba(245,158,11,0.06));
+      border: 1px solid rgba(30,58,138,0.10);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      line-height: 1.75;
+      color: var(--navy-700);
+    }
+    .reading-body .antiphon-label {
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--gold-700);
+      margin-right: 0.3em;
+    }
+    /* In LTR mode only, uppercase looks good for "ANT." */
+    [dir="ltr"] .reading-body .antiphon-label {
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    body[dir="rtl"] .reading-body .antiphon-label {
+      margin-right: 0;
+      margin-left: 0.3em;
+      letter-spacing: 0;
+    }
+    .reading-body .verse-num {
+      font-size: 0.65em;
+      opacity: 0.65;
+      vertical-align: super;
+      font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+      letter-spacing: 0;
+      user-select: none;
+    }
+    body[dir="rtl"] .reading-body .verse-num {
+      font-size: 0.65em;
+      vertical-align: super;
+    }
+    /* Psalm verse separator characters used in breviary chant notation */
+    .reading-body .antiphon-line,
+    .reading-body .prayer-line {
+      word-break: break-word;
+    }
+
+    /* Drop cap */
+    .reading-body.drop-cap > p:first-of-type::first-letter {
+      float: left; font-size: 3.8rem; line-height: 0.75;
+      padding-right: 0.1em; padding-top: 0.06em;
+      color: var(--navy-700);
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 700;
+    }
+    .card.gospel .reading-body.drop-cap > p:first-of-type::first-letter { color: var(--gold-600); }
+
+    body[dir="rtl"] .reading-body {
+      font-family: 'Noto Sans Arabic', sans-serif;
+      font-size: 1.12rem; line-height: 2.25;
+    }
+    body[dir="rtl"] .reading-body.drop-cap > p:first-of-type::first-letter {
+      float: right; padding-right: 0; padding-left: 0.1em;
+    }
+
+    /* Attribution / copyright lines inside reading text */
+    .reading-attr {
+      font-size: 0.58rem !important;
+      font-family: 'Inter', sans-serif !important;
+      color: var(--text-faint) !important;
+      letter-spacing: 0.06em;
+      font-style: italic;
+      margin-top: 1.6em !important;
+      margin-bottom: 0 !important;
+      opacity: 0.7;
+    }
+    .card.saint .reading-attr { color: rgba(255,255,255,0.3) !important; }
+
+    /* Delete / re-download bar shown at bottom of each loaded tab */
+    .day-actions {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 10px; margin: 32px 0 8px;
+      padding: 12px 16px;
+      background: var(--parchment-200);
+      border-radius: var(--r-sm);
+      border: 1px dashed var(--border-med);
+    }
+    .day-actions-label {
+      flex: 1;
+      font-size: 0.65rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-faint);
+    }
+    .btn-delete {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 14px; border-radius: var(--r-full);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.68rem; font-weight: 600;
+      letter-spacing: 0.04em;
+      background: transparent;
+      border: 1px solid var(--crimson-700);
+      color: var(--crimson-700);
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+    }
+    .btn-delete:hover { background: var(--crimson-700); color: white; }
+    .btn-delete svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    /* ═══════════════════════════════════════════
+       SECTION DIVIDERS
+    ═══════════════════════════════════════════ */
+    .section-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 28px 0 18px;
+    }
+    .section-divider::before, .section-divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, var(--border-med), transparent);
+    }
+    .chip {
+      padding: 5px 14px; border-radius: var(--r-full);
+      font-size: 0.67rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      white-space: nowrap; box-shadow: var(--shadow-xs);
+    }
+    .chip.navy    { background: var(--navy-700); color: white; }
+    .chip.gold    { background: linear-gradient(135deg, var(--gold-500), var(--gold-700)); color: white; }
+    .chip.crimson { background: var(--crimson-700); color: white; }
+    .chip.green   { background: var(--season-ordinary); color: white; }
+
+    /* ═══════════════════════════════════════════
+       FEAST TITLE
+    ═══════════════════════════════════════════ */
+    .feast-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic; font-size: 1.45rem; font-weight: 600;
+      color: var(--navy-700); text-align: center;
+      margin: 0 0 22px; line-height: 1.3;
+    }
+
+    /* ═══════════════════════════════════════════
+       BILINGUAL DIVIDER
+    ═══════════════════════════════════════════ */
+    .bilingual-divider {
+      display: flex; align-items: center; gap: 16px; margin: 44px 0;
+    }
+    .bilingual-divider::before, .bilingual-divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, var(--border-med), transparent);
+    }
+    .bilingual-divider span { color: var(--gold-400); font-size: 1.25rem; }
+
+    /* ═══════════════════════════════════════════
+       HOME TAB
+    ═══════════════════════════════════════════ */
+    .hero-card {
+      background: linear-gradient(145deg, var(--navy-900) 0%, #182d5a 55%, #0c1e3f 100%);
+      border-radius: var(--r-lg); padding: 26px 22px;
+      color: white; margin-bottom: 18px;
+      box-shadow: var(--shadow-xl), var(--glow-navy);
+      border: 1px solid rgba(255,255,255,0.05);
+      position: relative; overflow: hidden;
+    }
+    .hero-card::after {
+      content: '✝'; position: absolute;
+      right: -16px; top: -32px; font-size: 14rem;
+      color: rgba(255,255,255,0.025); pointer-events: none; line-height: 1;
+    }
+    .hero-eyebrow {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--gold-300); margin-bottom: 7px;
+    }
+    .hero-date {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.65rem; font-weight: 700; color: white;
+      margin-bottom: 5px; line-height: 1.2; letter-spacing: -0.01em;
+    }
+    .hero-feast {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic; font-size: 0.98rem;
+      color: rgba(255,255,255,0.65); margin-bottom: 18px; line-height: 1.4;
+    }
+    .season-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 13px; border-radius: var(--r-full);
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.13);
+      color: rgba(255,255,255,0.88);
+    }
+    .season-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 14px;
+    }
+    .qa-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--r-md); padding: 16px 10px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      cursor: pointer; text-align: center;
+      box-shadow: var(--shadow-xs);
+      transition: all 0.2s var(--ease-spring);
+    }
+    .qa-tile:hover  { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .qa-tile:active { transform: scale(0.96); }
+    .qa-icon {
+      width: 42px; height: 42px; border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qa-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .qa-icon.gold    { background: rgba(245,158,11,0.10); color: var(--gold-600); }
+    .qa-icon.navy    { background: rgba(30,58,138,0.08);  color: var(--navy-700); }
+    .qa-icon.crimson { background: rgba(153,27,27,0.08);  color: var(--crimson-700); }
+    .qa-label { font-size: 0.68rem; font-weight: 600; color: var(--text-muted); }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg-card); border-radius: var(--r-sm);
+      border: 1px solid var(--border-light);
+      padding: 10px 14px; margin-bottom: 16px;
+      font-size: 0.74rem; color: var(--text-muted);
+    }
+    .status-left { display: flex; align-items: center; gap: 7px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #10b981; }
+    .status-dot.offline { background: var(--gold-400); }
+
+    /* Gospel Preview Card on Home */
+    .preview-card {
+      background: linear-gradient(155deg, #fffef9, var(--gold-50));
+      border: 1px solid var(--border-gold);
+      border-radius: var(--r-md); padding: 20px;
+      margin-bottom: 12px; cursor: pointer;
+      box-shadow: var(--shadow-sm), var(--glow-gold);
+      transition: all 0.2s var(--ease-spring);
+      position: relative; overflow: hidden;
+    }
+    .preview-card:hover  { transform: translateY(-2px); box-shadow: var(--shadow-md), var(--glow-gold); }
+    .preview-card:active { transform: scale(0.98); }
+    .preview-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: linear-gradient(180deg, var(--gold-300), var(--gold-600));
+      border-radius: var(--r-xs) 0 0 var(--r-xs);
+    }
+    body[dir="rtl"] .preview-card::before {
+      left: auto; right: 0; border-radius: 0 var(--r-xs) var(--r-xs) 0;
+    }
+    .preview-label { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--gold-600); margin-bottom: 6px; }
+    .preview-ref   { font-family: 'Playfair Display', Georgia, serif; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; }
+    .preview-text  { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 1.05rem; line-height: 1.7; color: var(--text-body); }
+    .preview-cta   { margin-top: 12px; font-size: 0.75rem; font-weight: 700; color: var(--gold-600); letter-spacing: 0.04em; }
+
+    /* Saint preview on Home */
+    .saint-preview {
+      background: linear-gradient(135deg, var(--navy-900), #1a2d5a);
+      border-radius: var(--r-md); padding: 20px;
+      color: white; cursor: pointer;
+      box-shadow: var(--shadow-md), var(--glow-navy);
+      transition: all 0.2s var(--ease-spring);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .saint-preview:hover  { transform: translateY(-2px); }
+    .saint-preview:active { transform: scale(0.98); }
+    .saint-preview-label { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.45); margin-bottom: 5px; }
+    .saint-preview-name  { font-family: 'Playfair Display', Georgia, serif; font-size: 1.1rem; font-weight: 600; color: var(--gold-200); margin-bottom: 8px; }
+    .saint-preview-text  { font-size: 0.875rem; line-height: 1.65; color: rgba(255,255,255,0.72); }
+    .saint-preview-cta   { margin-top: 10px; font-size: 0.72rem; font-weight: 700; color: var(--gold-300); letter-spacing: 0.04em; }
+
+    /* ═══════════════════════════════════════════
+       PRAYERS TAB
+    ═══════════════════════════════════════════ */
+    .prayer-subnav {
+      display: flex; background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--r-md); padding: 4px;
+      margin-bottom: 20px; box-shadow: var(--shadow-xs);
+    }
+    .prayer-sub-btn {
+      flex: 1; padding: 10px; border: none; background: transparent;
+      border-radius: var(--r-sm);
+      font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600;
+      color: var(--text-muted); cursor: pointer;
+      transition: all 0.22s var(--ease-inout);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .prayer-sub-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .prayer-sub-btn.active { background: var(--navy-700); color: white; box-shadow: var(--shadow-sm); }
+
+    /* Prayer Flow Steps */
+    .prayer-flow { display: flex; flex-direction: column; }
+    .prayer-step {
+      position: relative; padding-left: 30px; margin-bottom: 14px;
+    }
+    .prayer-step::after {
+      content: ''; position: absolute;
+      left: 11px; top: 42px; bottom: -14px; width: 2px;
+      background: linear-gradient(180deg, var(--border-med) 70%, transparent);
+    }
+    .prayer-step:last-child::after { display: none; }
+    .prayer-step-node {
+      position: absolute; left: 4px; top: 22px;
+      width: 15px; height: 15px; border-radius: 50%;
+      background: var(--navy-700); border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--navy-200); z-index: 1;
+    }
+    .prayer-step .card { margin-bottom: 0; }
+    body[dir="rtl"] .prayer-step { padding-left: 0; padding-right: 30px; }
+    body[dir="rtl"] .prayer-step::after { left: auto; right: 11px; }
+    body[dir="rtl"] .prayer-step-node { left: auto; right: 4px; }
+
+    /* ═══════════════════════════════════════════
+       CALENDAR TAB
+    ═══════════════════════════════════════════ */
+    .cal-card {
+      background: var(--bg-card); border-radius: var(--r-lg);
+      padding: 20px 16px; box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-light);
+    }
+    .cal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .cal-month-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.2rem; font-weight: 700; color: var(--text-primary);
+    }
+    .cal-nav-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--border-med); background: var(--bg-base);
+      color: var(--text-body); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.18s; box-shadow: var(--shadow-xs);
+    }
+    .cal-nav-btn:hover  { background: white; box-shadow: var(--shadow-sm); }
+    .cal-nav-btn:active { transform: scale(0.92); }
+    .cal-nav-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .cal-weekday {
+      text-align: center; font-size: 0.63rem; font-weight: 700;
+      color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 4px 0 10px;
+    }
+    .cal-day {
+      aspect-ratio: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 50%; font-size: 0.87rem;
+      font-weight: 500; color: var(--text-body);
+      position: relative; transition: all 0.18s var(--ease-inout);
+      user-select: none;
+    }
+    .cal-day:hover:not(.empty) { background: var(--parchment-200); }
+    .cal-day.today { color: var(--navy-700); font-weight: 700; }
+    .cal-day.today::after {
+      content: ''; position: absolute; bottom: 2px;
+      width: 4px; height: 4px; background: var(--navy-700); border-radius: 50%;
+    }
+    .cal-day.selected {
+      background: var(--navy-700) !important; color: white !important;
+      box-shadow: 0 3px 12px rgba(30,58,138,0.38); transform: scale(1.07); font-weight: 700;
+    }
+    .cal-day.selected.today::after { background: rgba(255,255,255,0.6); }
+    .cal-day.has-data {
+      text-decoration: underline; text-decoration-color: rgba(0,0,0,0.13);
+      text-decoration-thickness: 2px; text-underline-offset: 3px;
+    }
+    .cal-day.selected.has-data { text-decoration-color: rgba(255,255,255,0.4); }
+    .cal-day[data-color]::before {
+      content: ''; position: absolute; top: 2px;
+      width: 5px; height: 5px; border-radius: 50%;
+    }
+    .cal-day[data-color="green"]::before  { background: var(--season-ordinary); }
+    .cal-day[data-color="purple"]::before { background: var(--season-lent); }
+    .cal-day[data-color="white"]::before  { background: var(--neutral-400); border: 1px solid var(--neutral-300); }
+    .cal-day[data-color="red"]::before    { background: var(--season-red); }
+    .cal-day[data-color="rose"]::before   { background: var(--season-rose); }
+    body[dir="rtl"] .cal-grid { direction: rtl; }
+
+    /* Calendar Legend */
+    .cal-legend {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      margin-top: 16px; padding-top: 14px;
+      border-top: 1px solid var(--border-light);
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.66rem; color: var(--text-muted); font-weight: 500; }
+    .legend-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ═══════════════════════════════════════════
+       EMPTY STATES
+    ═══════════════════════════════════════════ */
+    .empty-state {
+      text-align: center; padding: 52px 24px 40px;
+      animation: fadeUp 0.4s var(--ease-out);
+    }
+    .empty-icon  { font-size: 2.6rem; opacity: 0.25; margin-bottom: 14px; }
+    .empty-title { font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem; font-weight: 600; color: var(--text-muted); margin-bottom: 7px; }
+    .empty-body  { font-size: 0.875rem; color: var(--text-faint); line-height: 1.6; margin-bottom: 22px; }
+
+    /* Buttons */
+    .btn-primary {
+      background: var(--navy-700); color: white; border: none;
+      padding: 12px 28px; border-radius: var(--r-full);
+      font-family: 'Inter', sans-serif; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; box-shadow: var(--shadow-sm);
+      transition: all 0.2s var(--ease-inout); letter-spacing: 0.01em;
+    }
+    .btn-primary:hover  { background: var(--navy-600); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(0.97); }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE BREAKPOINTS
+    ═══════════════════════════════════════════ */
+
+    /* ─── Small phones (≥ 480px) ─── */
+    @media (min-width: 480px) {
+      .tab-pane { padding: 22px 20px; }
+    }
+
+    /* ─── Tablets portrait (≥ 640px) ─── */
+    @media (min-width: 640px) {
+      :root { --nav-h: 72px; --header-h: 78px; }
+      .tab-pane { padding: 26px 28px; }
+      .reading-body { font-size: 1.2rem; line-height: 2; }
+      .hero-date { font-size: 1.85rem; }
+      .quick-actions { gap: 14px; }
+      .qa-tile { padding: 20px 14px; }
+      .qa-icon { width: 48px; height: 48px; }
+      .cal-day { min-height: 42px; font-size: 0.9rem; }
+    }
+
+    /* ─── Desktop & tablet landscape (≥ 900px) ─────────────────────────
+       Strategy (simple & reliable):
+         • Header stays position:fixed at top
+         • Sidebar stays position:fixed on the left
+         • App-body shifts right via margin-left so it is never under the sidebar
+         • Page body scrolls normally — no overflow:auto tricks
+    ─────────────────────────────────────────────────────────────────── */
+    @media (min-width: 900px) {
+      :root {
+        --sidebar-w: 240px;
+        --nav-h:     0px;
+        --header-h:  72px;
+      }
+
+      /* ── Header ── */
+      .app-header { z-index: 1000; }
+      .header-inner {
+        max-width: none;
+        padding-left:  calc(var(--sidebar-w) + 28px);
+        padding-right: 32px;
+      }
+      body[dir="rtl"] .header-inner {
+        padding-left:  32px;
+        padding-right: calc(var(--sidebar-w) + 28px);
+      }
+
+      /* ── Left Sidebar ── */
+      .bottom-nav {
+        position: fixed !important;
+        top:    var(--header-h);
+        left:   0;
+        right:  auto !important;
+        bottom: 0;
+        width:  var(--sidebar-w);
+        height: auto;
+        z-index: 900;
+        border-top:   none;
+        border-right: 1px solid rgba(255,255,255,0.07);
+        padding-top:    20px;
+        padding-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        background: rgba(9, 18, 38, 0.97);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+      }
+      body[dir="rtl"] .bottom-nav {
+        left:   auto !important;
+        right:  0 !important;
+        border-right: none;
+        border-left:  1px solid rgba(255,255,255,0.07);
+      }
+
+      .nav-inner {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        max-width: 100%;
+        gap: 4px;
+        padding: 0 12px;
+      }
+      .nav-item {
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        border-radius: var(--r-sm);
+        font-size: 0.85rem;
+        font-weight: 500;
+        width: 100%;
+        text-align: left;
+        color: rgba(255,255,255,0.5);
+        transition: background 0.15s, color 0.15s;
+      }
+      body[dir="rtl"] .nav-item { text-align: right; }
+      .nav-item:hover  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+      .nav-item.active { background: rgba(251,191,36,0.14); color: var(--gold-300); }
+      .nav-pill { display: none; }
+      .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+      .bottom-nav::before {
+        content: 'Prayful Generation';
+        display: block;
+        color: rgba(255,255,255,0.2);
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        padding: 0 28px 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        margin-bottom: 12px;
+        flex-shrink: 0;
+      }
+
+      /* ── App-body: push right of sidebar, below header ── */
+      .app-body {
+        position: static !important;   /* normal document flow — body scrolls */
+        margin-top:  var(--header-h);
+        margin-left: var(--sidebar-w);
+        min-height:  calc(100vh - var(--header-h));
+        overflow:    visible;
+      }
+      body[dir="rtl"] .app-body {
+        margin-left:  0;
+        margin-right: var(--sidebar-w);
+      }
+
+      /* ── Main content ── */
+      .main-content {
+        padding-top:    32px;
+        padding-left:   32px;
+        padding-right:  32px;
+        padding-bottom: 64px;
+      }
+
+      /* ── Tab panes: fill the available space ── */
+      .tab-pane {
+        max-width:  1100px;
+        padding:    0;
+        margin:     0 auto;
+      }
+
+      /* Typography */
+      .reading-body { font-size: 1.2rem; line-height: 2.0; }
+      .reading-body.drop-cap > p:first-of-type::first-letter { font-size: 4rem; }
+
+      /* Cards */
+      .card       { padding: 26px 28px; }
+      .hero-card  { padding: 32px 36px; }
+      .hero-date  { font-size: 1.9rem;  }
+      .cal-day    { min-height: 48px; font-size: 0.92rem; }
+      .quick-actions { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* ─── Large desktop (≥ 1280px) ─── */
+    @media (min-width: 1280px) {
+      :root { --sidebar-w: 260px; }
+      .main-content { padding: 36px 48px 72px; }
+      .reading-body { font-size: 1.24rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Loading Overlay -->
+  <div id="loading"><div class="spinner"></div></div>
+
+  <!-- Offline Toast -->
+  <div id="offline-toast">OFFLINE MODE</div>
+
+  <!-- ══════════════════════════
+       HEADER
+  ══════════════════════════ -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.8" stroke-linecap="round">
+            <line x1="12" y1="3" x2="12" y2="21"/>
+            <line x1="5" y1="9" x2="19" y2="9"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name" id="brand-name">Prayful Generation</span>
+          <span class="brand-city">Alexandria</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="lang-toggle">
+          <button class="lang-btn active" onclick="setLanguage('en')">EN</button>
+          <button class="lang-btn" onclick="setLanguage('ar')">ع</button>
+          <button class="lang-btn" onclick="setLanguage('both')">⊕</button>
+        </div>
+      </div>
+    </div>
+    <div class="season-strip" id="season-strip"></div>
+  </header>
+
+  <!-- ══════════════════════════
+       APP BODY
+  ══════════════════════════ -->
+  <div class="app-body">
+  <div class="main-content">
+
+    <!-- ▓▓▓  HOME TAB  ▓▓▓ -->
+    <section id="tab-home" class="tab-pane active">
+
+      <div class="hero-card">
+        <div class="hero-eyebrow" id="hero-greeting">Good Morning</div>
+        <div class="hero-date" id="hero-date">Loading…</div>
+        <div class="hero-feast" id="hero-feast">Select a date to begin your daily meditation</div>
+        <div class="season-badge">
+          <span class="season-dot" id="season-dot" style="background:var(--season-ordinary)"></span>
+          <span id="season-name">Ordinary Time</span>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <div class="qa-tile" onclick="switchTab('gospel')">
+          <div class="qa-icon gold">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <span class="qa-label" id="qa-gospel">Gospel</span>
+        </div>
+        <div class="qa-tile" onclick="switchTab('prayers')">
+          <div class="qa-icon navy">
+            <svg viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0v0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+          </div>
+          <span class="qa-label" id="qa-prayers">Prayers</span>
+        </div>
+        <div class="qa-tile" onclick="switchTab('saints')">
+          <div class="qa-icon crimson">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M12 2v1.5M12 14.5V16M5.27 5.27l1.06 1.06M17.67 17.67l1.06 1.06M2 12h1.5M20.5 12H22M5.27 18.73l1.06-1.06M17.67 6.33l1.06-1.06"/></svg>
+          </div>
+          <span class="qa-label" id="qa-saint">Saint</span>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="sync-text">Connecting…</span>
+        </div>
+        <span id="selected-date-label" style="font-size:0.7rem;color:var(--text-faint)">No date selected</span>
+      </div>
+
+      <div id="home-preview"></div>
+
+    </section>
+
+    <!-- ▓▓▓  GOSPEL TAB  ▓▓▓ -->
+    <section id="tab-gospel" class="tab-pane">
+      <div id="gospel-content">
+        <div class="empty-state">
+          <div class="empty-icon">✝</div>
+          <div class="empty-title" id="gospel-empty-title">No Reading Selected</div>
+          <div class="empty-body" id="gospel-empty-body">Use the Calendar tab to choose a date.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓  PRAYERS TAB  ▓▓▓ -->
+    <section id="tab-prayers" class="tab-pane">
+      <div class="prayer-subnav">
+        <button class="prayer-sub-btn active" id="btn-morning" onclick="switchPrayerMode('morning')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <span id="morning-label">Morning</span>
+        </button>
+        <button class="prayer-sub-btn" id="btn-evening" onclick="switchPrayerMode('evening')">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <span id="evening-label">Evening</span>
+        </button>
+      </div>
+      <div id="prayers-content">
+        <div class="empty-state">
+          <div class="empty-icon">🙏</div>
+          <div class="empty-title" id="prayers-empty-title">No Prayer Selected</div>
+          <div class="empty-body" id="prayers-empty-body">Use the Calendar tab to choose a date.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓  SAINTS TAB  ▓▓▓ -->
+    <section id="tab-saints" class="tab-pane">
+      <div id="saints-content">
+        <div class="empty-state">
+          <div class="empty-icon">⭐</div>
+          <div class="empty-title" id="saints-empty-title">No Saint Selected</div>
+          <div class="empty-body" id="saints-empty-body">Use the Calendar tab to choose a date.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ▓▓▓  CALENDAR TAB  ▓▓▓ -->
+    <section id="tab-calendar" class="tab-pane">
+      <div class="cal-card">
+        <div class="cal-header">
+          <button class="cal-nav-btn" onclick="changeMonth(-1)" aria-label="Previous Month">
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="cal-month-name" id="cal-month">March 2026</span>
+          <button class="cal-nav-btn" onclick="changeMonth(1)" aria-label="Next Month">
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--season-ordinary)"></div> Ordinary</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--season-lent)"></div> Lent/Advent</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--season-red)"></div> Red</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--season-rose)"></div> Rose</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--neutral-400); border:1px solid var(--neutral-300)"></div> White/Gold</div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /main-content -->
+  </div><!-- /app-body -->
+
+  <!-- ══════════════════════════
+       BOTTOM NAVIGATION
+  ══════════════════════════ -->
+  <nav class="bottom-nav" aria-label="Main Navigation">
+    <div class="nav-inner">
+
+      <button class="nav-item active" id="nav-home" onclick="switchTab('home')">
+        <div class="nav-pill">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <span id="nav-home-lbl">Home</span>
+      </button>
+
+      <button class="nav-item" id="nav-gospel" onclick="switchTab('gospel')">
+        <div class="nav-pill">
+          <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <span id="nav-gospel-lbl">Gospel</span>
+      </button>
+
+      <button class="nav-item" id="nav-prayers" onclick="switchTab('prayers')">
+        <div class="nav-pill">
+          <svg viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-4 0v0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+        </div>
+        <span id="nav-prayers-lbl">Prayers</span>
+      </button>
+
+      <button class="nav-item" id="nav-saints" onclick="switchTab('saints')">
+        <div class="nav-pill">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M12 2v1.5M12 14.5V16M5.27 5.27l1.06 1.06M17.67 17.67l1.06 1.06M2 12h1.5M20.5 12H22M5.27 18.73l1.06-1.06M17.67 6.33l1.06-1.06"/></svg>
+        </div>
+        <span id="nav-saints-lbl">Saints</span>
+      </button>
+
+      <button class="nav-item" id="nav-calendar" onclick="switchTab('calendar')">
+        <div class="nav-pill">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <span id="nav-calendar-lbl">Calendar</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <script>
+    /**
+     * PRAYFUL GENERATION — ALEXANDRIA  |  v3.0
+     * Professional PWA — Full bilingual Catholic Daily Prayer Reader
+     */
+
+    // ══════════════════════════════════════
+    // CONFIGURATION
+    // ══════════════════════════════════════
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const _sdk = window.supabase;
+    let supabase = null;
+    if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+      supabase = _sdk.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+
+    // ══════════════════════════════════════
+    // STATE
+    // ══════════════════════════════════════
+    let activeTab        = 'home';
+    let activePrayerMode = 'morning';
+    let currentLang      = 'en';
+    let currentViewDate  = new Date();
+    let selectedDateKey  = null;
+    let localCache       = {};
+    try { localCache = JSON.parse(localStorage.getItem('readings_cache') || '{}'); } catch(e) {}
+
+    // ── UI State Machine ──────────────────────────────────────────────────
+    // IDLE    : app just launched, no date picked yet
+    // LOADING : fetch in progress (spinner shown)
+    // LOADED  : data found in localStorage → readings rendered
+    // EMPTY   : no data for this date → download button shown
+    // ─────────────────────────────────────────────────────────────────────
+    const UI_STATE = Object.freeze({ IDLE: 'idle', LOADING: 'loading', LOADED: 'loaded', EMPTY: 'empty' });
+    let currentUIState = UI_STATE.IDLE;
+
+    // ══════════════════════════════════════
+    // INIT
+    // ══════════════════════════════════════
+    window.addEventListener('DOMContentLoaded', () => {
+      registerSW();
+      checkOnline();
+      setGreeting();
+      renderCalendar();
+      const today = fmtDate(new Date());
+      selectDate(today);
+      syncWithSupabase();
+    });
+
+    // ══════════════════════════════════════
+    // TAB NAVIGATION
+    // ══════════════════════════════════════
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const pane = document.getElementById('tab-' + tab);
+      const btn  = document.getElementById('nav-' + tab);
+      if (pane) pane.classList.add('active');
+      if (btn)  btn.classList.add('active');
+      activeTab = tab;
+      /* Scroll to top — works for both body-scroll (mobile) and
+         app-body-scroll (desktop) containers */
+      window.scrollTo(0, 0);
+      const ab = document.querySelector('.app-body');
+      if (ab) ab.scrollTop = 0;
+      if (navigator.vibrate) navigator.vibrate(6);
+    }
+
+    // ══════════════════════════════════════
+    // PRAYER MODE (Morning / Evening)
+    // ══════════════════════════════════════
+    function switchPrayerMode(mode) {
+      activePrayerMode = mode;
+      document.getElementById('btn-morning').classList.toggle('active', mode === 'morning');
+      document.getElementById('btn-evening').classList.toggle('active', mode === 'evening');
+      if (selectedDateKey && localCache[selectedDateKey]) {
+        renderPrayersTab(localCache[selectedDateKey]);
+      }
+    }
+
+    // ══════════════════════════════════════
+    // LANGUAGE
+    // ══════════════════════════════════════
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => {
+        b.classList.remove('active');
+        const m = (b.getAttribute('onclick') || '').match(/setLanguage\('(\w+)'\)/);
+        if (m && m[1] === lang) b.classList.add('active');
+      });
+      document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      applyLocaleLabels();
+      renderCalendar();
+      if (selectedDateKey) onDateChange(selectedDateKey);
+    }
+
+    function applyLocaleLabels() {
+      const ar = currentLang === 'ar';
+      document.getElementById('brand-name').textContent       = ar ? 'جيل الصلاة' : 'Prayful Generation';
+      document.getElementById('qa-gospel').textContent        = ar ? 'الإنجيل'    : 'Gospel';
+      document.getElementById('qa-prayers').textContent       = ar ? 'الصلوات'   : 'Prayers';
+      document.getElementById('qa-saint').textContent         = ar ? 'القديس'    : 'Saint';
+      document.getElementById('morning-label').textContent    = ar ? 'الصباح'    : 'Morning';
+      document.getElementById('evening-label').textContent    = ar ? 'المساء'    : 'Evening';
+      document.getElementById('nav-home-lbl').textContent     = ar ? 'الرئيسية' : 'Home';
+      document.getElementById('nav-gospel-lbl').textContent   = ar ? 'الإنجيل'  : 'Gospel';
+      document.getElementById('nav-prayers-lbl').textContent  = ar ? 'الصلاة'   : 'Prayers';
+      document.getElementById('nav-saints-lbl').textContent   = ar ? 'القديس'   : 'Saints';
+      document.getElementById('nav-calendar-lbl').textContent = ar ? 'التقويم'  : 'Calendar';
+      setGreeting();
+    }
+
+    // ══════════════════════════════════════
+    // STEP 1 — CALENDAR CLICK HANDLER
+    // Updates selectedDateKey, then fires the "effect".
+    // Strict YYYY-MM-DD validation guards every path downstream.
+    // ══════════════════════════════════════
+    function selectDate(dateKey) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+        console.warn('[selectDate] rejected non-YYYY-MM-DD value:', dateKey);
+        return;
+      }
+
+      selectedDateKey = dateKey;
+      renderCalendar(); // repaint calendar with new selection highlight
+
+      // Update date display labels
+      const d      = new Date(dateKey + 'T00:00:00');
+      const locale = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+      document.getElementById('hero-date').textContent =
+        d.toLocaleDateString(locale, { weekday:'long', month:'long', day:'numeric' });
+      document.getElementById('selected-date-label').textContent =
+        d.toLocaleDateString(locale, { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+
+      // Show the correct liturgical season immediately (offline calculator)
+      // — overridden by real API data once a download completes
+      const est = estimateSeasonFromDate(dateKey);
+      document.getElementById('season-strip').style.background =
+        `linear-gradient(90deg, ${est.hex} 0%, transparent 100%)`;
+      document.getElementById('season-dot').style.background = est.hex;
+      document.getElementById('season-name').textContent      = est.season;
+
+      // Fire the reactive effect
+      onDateChange(dateKey);
+    }
+
+    // ══════════════════════════════════════
+    // STEP 2 — useEffect EQUIVALENT
+    // Runs every time selectedDateKey changes.
+    // Checks localStorage (via localCache) and transitions the UI
+    // to either LOADED (data present) or EMPTY (download prompt).
+    // ══════════════════════════════════════
+    function onDateChange(dateKey) {
+      const data = localCache[dateKey]; // localCache is always in sync with localStorage
+
+      if (data) {
+        setUIState(UI_STATE.LOADED, dateKey, data);
+      } else {
+        setUIState(UI_STATE.EMPTY, dateKey, null);
+      }
+    }
+
+    // ══════════════════════════════════════
+    // STEP 3 — STATE → UI DISPATCHER
+    // Single point that decides what the user sees.
+    // ══════════════════════════════════════
+    function setUIState(state, dateKey, data) {
+      currentUIState = state;
+
+      if (state === UI_STATE.LOADED) {
+        updateSeasonStrip(data.feast);
+        renderHomeTab(data);
+        renderGospelTab(data);
+        renderPrayersTab(data);
+        renderSaintsTab(data);
+        // Append delete bar to each content tab so users can clear & re-download
+        const bar = mkDeleteBar(dateKey);
+        ['gospel-content', 'prayers-content', 'saints-content'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.insertAdjacentHTML('beforeend', bar);
+        });
+
+      } else if (state === UI_STATE.EMPTY) {
+        renderEmptyAll(dateKey);
+      }
+      // LOADING is handled by the spinner overlay in fetchDate
+    }
+
+    /**
+     * Deletes the cached data for a specific date from both in-memory cache
+     * and localStorage, then re-runs onDateChange to show the EMPTY state.
+     */
+    function deleteDate(dateKey) {
+      if (!dateKey) return;
+      delete localCache[dateKey];
+      try { localStorage.removeItem('day_' + dateKey); } catch(e) {}
+      onDateChange(dateKey); // → transitions back to EMPTY + shows download button
+    }
+
+    /** Builds the delete / re-download action bar HTML */
+    function mkDeleteBar(dateKey) {
+      const ar = currentLang === 'ar';
+      const label = ar ? `بيانات ${dateKey}` : `Cached data for ${dateKey}`;
+      const btnTxt = ar ? 'حذف وإعادة التنزيل' : 'Delete & Re-download';
+      return `
+        <div class="day-actions">
+          <span class="day-actions-label">${label}</span>
+          <button class="btn-delete" onclick="deleteDate('${dateKey}')">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            ${btnTxt}
+          </button>
+        </div>`;
+    }
+
+    // ══════════════════════════════════════
+    // STEP 4 — EMPTY STATE RENDERER
+    // Shows the 'تنزيل من السحابة' button on ALL tabs so the user
+    // can trigger a download from any screen, not just Home.
+    // ══════════════════════════════════════
+    function renderEmptyAll(dateKey) {
+      const ar  = currentLang === 'ar';
+      const msg = ar ? 'لم يتم تنزيل قراءات لهذا اليوم بعد.' : 'No readings downloaded yet for this day.';
+
+      const downloadBtn = `
+        <div style="text-align:center;padding:20px 0 8px">
+          <p style="font-size:0.82rem;color:var(--text-faint);margin-bottom:14px">
+            ${ar ? `الملف المطلوب: data/${dateKey}.json` : `Looking for: data/${dateKey}.json`}
+          </p>
+          <button class="btn-primary" onclick="fetchDate('${dateKey}')">
+            ${ar ? 'تنزيل من السحابة' : 'Download from Cloud'}
+          </button>
+        </div>`;
+
+      document.getElementById('hero-feast').textContent = msg;
+      document.getElementById('home-preview').innerHTML = downloadBtn;
+
+      document.getElementById('gospel-content').innerHTML =
+        mkEmpty('✝',  ar ? 'لا توجد قراءة' : 'No Reading Available',  msg) + downloadBtn;
+
+      document.getElementById('prayers-content').innerHTML =
+        mkEmpty('🙏', ar ? 'لا توجد صلاة'  : 'No Prayer Available',   msg) + downloadBtn;
+
+      document.getElementById('saints-content').innerHTML =
+        mkEmpty('⭐', ar ? 'لا يوجد قديس'  : 'No Saint Available',    msg) + downloadBtn;
+    }
+
+    // ══════════════════════════════════════
+    // HOME TAB RENDER
+    // ══════════════════════════════════════
+    function renderHomeTab(data) {
+      const ar     = currentLang === 'ar';
+      const suffix = ar ? '_ar' : '_en';
+      const locale = ar ? 'ar-EG' : 'en-US';
+
+      const feast = data.feast || (ar ? 'يوم عادي' : 'Ordinary Day');
+      document.getElementById('hero-feast').textContent = feast;
+
+      // Gospel preview
+      const gospelText = data['gospel' + suffix] || data.gospel_en || '';
+      const gospelRef  = data['gospel_ref' + suffix] || data.gospel_ref_en || data.gospel_ref || '';
+      let preview = '';
+
+      if (gospelText) {
+        const snippet = gospelText.replace(/\n/g, ' ').trim().substring(0, 200);
+        const ellipsis = gospelText.length > 200 ? '…' : '';
+        preview += `
+          <div class="preview-card" onclick="switchTab('gospel')">
+            <div class="preview-label">${ar ? 'إنجيل اليوم' : "Today's Gospel"}</div>
+            ${gospelRef ? `<div class="preview-ref">${gospelRef}</div>` : ''}
+            <div class="preview-text">"${snippet}${ellipsis}"</div>
+            <div class="preview-cta">${ar ? 'اقرأ الإنجيل كاملاً ←' : 'Read full Gospel →'}</div>
+          </div>`;
+      }
+
+      // Saint preview
+      const saintText = data['saint' + suffix] || data.saint_en || '';
+      if (saintText) {
+        // Show bio snippet — Arabic Wikipedia bio for AR mode, Evangelizo for EN
+        const bioRaw    = ((ar ? (data.saint_bio_ar || data.saint_bio_en) : data.saint_bio_en) || '').replace(/\n/g, ' ').trim();
+        const bioClip   = bioRaw.substring(0, 160);
+        const bioEllip  = bioRaw.length > 160 ? '…' : '';
+        const previewSnippet = bioClip
+          ? `<div class="saint-preview-text">${bioClip}${bioEllip}</div>`
+          : '';
+        preview += `
+          <div class="saint-preview" onclick="switchTab('saints')">
+            <div class="saint-preview-label">${ar ? 'تذكار' : 'Memorial'}</div>
+            <div class="saint-preview-name">${saintText}</div>
+            ${previewSnippet}
+            <div class="saint-preview-cta">${ar ? 'اقرأ السيرة كاملاً ←' : 'Read full story →'}</div>
+          </div>`;
+      }
+
+      document.getElementById('home-preview').innerHTML = preview;
+    }
+
+    // ══════════════════════════════════════
+    // GOSPEL TAB RENDER
+    // ══════════════════════════════════════
+    function renderGospelTab(data) {
+      const container = document.getElementById('gospel-content');
+
+      const renderBlock = (lang) => {
+        const sfx  = lang === 'ar' ? '_ar' : '_en';
+        const isAr = lang === 'ar';
+        const dir  = isAr ? 'dir="rtl"' : 'dir="ltr"';
+        let html = `<div ${dir}>`;
+        html += `<h2 class="feast-title">${esc(data.feast || '')}</h2>`;
+
+        if (data['reading1' + sfx]) {
+          html += mkDivider(isAr ? 'القراءة الأولى' : 'First Reading', 'navy');
+          html += mkCard('navy', isAr ? 'قراءة' : 'Reading I',
+            data['reading1_ref' + sfx] || data.reading1_ref || '',
+            data['reading1' + sfx], getLiturgicalHex(data.feast), 'stagger-1');
+        }
+        if (data['psalm' + sfx]) {
+          html += mkDivider(isAr ? 'المزمور الاستجابي' : 'Responsorial Psalm', 'green');
+          html += mkCard('psalm', isAr ? 'مزمور' : 'Psalm',
+            data['psalm_ref' + sfx] || data.psalm_ref || '',
+            data['psalm' + sfx], 'var(--season-ordinary)', 'stagger-2');
+        }
+        if (data['reading2' + sfx]) {
+          html += mkDivider(isAr ? 'القراءة الثانية' : 'Second Reading', 'navy');
+          html += mkCard('navy', isAr ? 'قراءة ثانية' : 'Reading II',
+            data['reading2_ref' + sfx] || data.reading2_ref || '',
+            data['reading2' + sfx], getLiturgicalHex(data.feast), 'stagger-3');
+        }
+        html += mkDivider(isAr ? 'الإنجيل المقدس' : 'Holy Gospel', 'gold');
+        html += mkCard('gospel', isAr ? 'إنجيل الرب' : 'Gospel of the Lord',
+          data['gospel_ref' + sfx] || data.gospel_ref || '',
+          data['gospel' + sfx] || '', null, 'stagger-4');
+
+        html += '</div>';
+        return html;
+      };
+
+      container.innerHTML = buildBilingual(renderBlock);
+    }
+
+    // ══════════════════════════════════════
+    // PRAYERS TAB RENDER
+    // ══════════════════════════════════════
+    function renderPrayersTab(data) {
+      const container = document.getElementById('prayers-content');
+
+      const renderBlock = (lang) => {
+        const sfx  = lang === 'ar' ? '_ar' : '_en';
+        const isAr = lang === 'ar';
+        const dir  = isAr ? 'dir="rtl"' : 'dir="ltr"';
+        let html = `<div ${dir}>`;
+        html += `<h2 class="feast-title">${esc(data.feast || '')}</h2>`;
+
+        if (activePrayerMode === 'morning') {
+          const hasStructured = data['morning_intro' + sfx] ||
+                                data['morning_psalm1' + sfx] ||
+                                data['morning_psalm2' + sfx] ||
+                                data['morning_psalm3' + sfx] ||
+                                data['gospel' + sfx] ||
+                                data['morning_ending' + sfx];
+          const hasSimple     = data['morning_prayer' + sfx];
+
+          if (hasStructured) {
+            html += '<div class="prayer-flow">';
+            let step = 0;
+            const nodeColors = [
+              'var(--navy-700)',
+              'var(--gold-600)',
+              'var(--crimson-700)',
+              'var(--season-lent)',
+              'var(--season-ordinary)',
+              'var(--gold-400)',
+            ];
+            const addStep = (label, text, ref, badge) => {
+              if (!text) return;
+              const nc = nodeColors[step % nodeColors.length];
+              html += `
+                <div class="prayer-step" style="animation-delay:${step * 0.06}s">
+                  <div class="prayer-step-node" style="background:${nc};box-shadow:0 0 0 2px ${nc}33"></div>
+                  <div class="card stagger-${Math.min(step+1,5)}" style="margin-bottom:0">
+                    <div class="reading-label">
+                      ${badge ? `<span class="reading-label-dot" style="background:${nc}"></span>` : ''}
+                      ${label}
+                    </div>
+                    ${ref ? `<div class="reading-ref">${esc(ref)}</div>` : ''}
+                    <div class="reading-body">${fmtText(text, { prayerMode: true, isArabic: isAr })}</div>
+                  </div>
+                </div>`;
+              step++;
+            };
+
+            // ── 1. Introduction Prayer ──────────────────────────────────
+            addStep(
+              isAr ? 'الصلاة الافتتاحية' : 'Introduction Prayer',
+              data['morning_intro' + sfx], '', true
+            );
+            // ── 2. First Psalm ───────────────────────────────────────────
+            addStep(
+              isAr ? 'المزمور الأوّل' : 'First Psalm',
+              data['morning_psalm1' + sfx],
+              data['morning_psalm1_ref' + sfx] || '', true
+            );
+            // ── 3. Second Psalm / Canticle ───────────────────────────────
+            addStep(
+              isAr ? 'المزمور الثاني' : 'Second Psalm',
+              data['morning_psalm2' + sfx],
+              data['morning_psalm2_ref' + sfx] || '', true
+            );
+            // ── 4. Third Psalm ───────────────────────────────────────────
+            addStep(
+              isAr ? 'المزمور الثالث' : 'Third Psalm',
+              data['morning_psalm3' + sfx],
+              data['morning_psalm3_ref' + sfx] || '',
+              true
+            );
+            // ── 5. Gospel of the Day ─────────────────────────────────────
+            if (data['gospel' + sfx]) {
+              addStep(
+                isAr ? 'إنجيل اليوم'    : 'Gospel of the Day',
+                data['gospel' + sfx],
+                data['gospel_ref' + sfx] || '',
+                true
+              );
+            }
+            // ── 6. Ending Prayer ─────────────────────────────────────────
+            // Structure:
+            //   a) Daily Intercessions from iBreviary (changes every day per calendar)
+            //      OR static Closing Thanksgiving Prayer when iBreviary is unavailable
+            //   b) Daily Collect from iBreviary (changes every day)
+            //   c) Dismissal Blessing (fixed, same every day)
+            {
+              const intercessions = data['morning_intercessions' + sfx] || '';
+              const collectText   = data['morning_ending' + sfx] || '';
+              // Use static closing thanks only as fallback when intercessions are absent
+              const fallbackThanks = intercessions
+                ? ''
+                : (isAr ? CLOSING_THANKS_AR : CLOSING_THANKS_EN);
+              const dismissalText = isAr ? DISMISSAL_AR : DISMISSAL_EN;
+              const parts = [];
+              if (intercessions)   parts.push(intercessions);
+              if (fallbackThanks)  parts.push(fallbackThanks);
+              if (collectText)     parts.push(collectText);
+              parts.push(dismissalText);
+              addStep(isAr ? 'صلاة الختام' : 'Ending Prayer', parts.join('\n\n'), '', true);
+            }
+
+            html += '</div>';
+          } else if (hasSimple) {
+            html += mkCard('navy', isAr ? 'صلاة الصباح' : 'Morning Prayer',
+              '', data['morning_prayer' + sfx], null, 'stagger-1');
+          } else {
+            html += mkEmpty('🌅', isAr ? 'لا توجد صلاة صباحية' : 'No Morning Prayer', '');
+          }
+
+        } else { // evening
+          const eveningText = data['evening_prayer' + sfx];
+          if (eveningText) {
+            html += mkCard('navy', isAr ? 'صلاة المساء' : 'Evening Prayer',
+              '', eveningText, null, 'stagger-1');
+          } else {
+            html += mkEmpty('🌙', isAr ? 'لا توجد صلاة مسائية' : 'No Evening Prayer',
+              isAr ? 'لم يُدخل صلاة مسائية لهذا اليوم.' : 'No evening prayer has been entered for this date.');
+          }
+        }
+
+        html += '</div>';
+        return html;
+      };
+
+      container.innerHTML = buildBilingual(renderBlock);
+    }
+
+    // ══════════════════════════════════════
+    // SAINTS TAB RENDER
+    // ══════════════════════════════════════
+    function renderSaintsTab(data) {
+      const container = document.getElementById('saints-content');
+
+      const renderBlock = (lang) => {
+        const sfx  = lang === 'ar' ? '_ar' : '_en';
+        const isAr = lang === 'ar';
+        const dir  = isAr ? 'dir="rtl"' : 'dir="ltr"';
+        const name = data['saint' + sfx] || data.saint_en;
+
+        if (!name) return mkEmpty('⭐', isAr ? 'لا يوجد قديس لهذا اليوم' : 'No Saint for This Day', '');
+
+        let html = `<div ${dir}>`;
+
+        // Premium navy name card
+        html += mkCard('saint', isAr ? 'تذكار القديس' : 'Memorial',
+          isAr ? 'قديس اليوم' : 'Saint of the Day',
+          name, null, 'stagger-1');
+
+        // Biography — Arabic Wikipedia for AR mode, Evangelizo for EN mode
+        const bio = isAr ? (data.saint_bio_ar || data.saint_bio_en) : data.saint_bio_en;
+        if (bio) {
+          html += mkDivider(isAr ? 'سيرة القديس' : 'Life & Story', 'navy');
+          const bioDir  = isAr && data.saint_bio_ar ? 'dir="rtl"' : 'dir="ltr"';
+          const bioLabel = isAr ? 'حياته وقصته' : 'Biography';
+          const bioSrc   = isAr && data.saint_bio_ar
+            ? '<span class="reading-attr">المصدر: ويكيبيديا العربية</span>'
+            : '<span class="reading-attr">Source: Evangelizo.org / Wikipedia</span>';
+          html += `
+            <div class="card bio stagger-2" ${bioDir}>
+              <div class="reading-label">
+                <span class="reading-label-dot" style="background:var(--navy-700)"></span>
+                ${bioLabel}
+              </div>
+              <div class="reading-body">${fmtText(bio)}</div>
+              ${bioSrc}
+            </div>`;
+        }
+
+        html += '</div>';
+        return html;
+      };
+
+      container.innerHTML = buildBilingual(renderBlock);
+    }
+
+    // ══════════════════════════════════════
+    // HTML BUILDERS
+    // ══════════════════════════════════════
+    function mkCard(type, label, ref, text, dotColor, stagger) {
+      if (!text) return '';
+      const dot = dotColor ? `<span class="reading-label-dot" style="background:${dotColor}"></span>` : '';
+      const dc  = (type === 'gospel' || type === 'saint') ? ' drop-cap' : '';
+      return `
+        <div class="card ${type} ${stagger || ''}">
+          <div class="reading-label">${dot}${label}</div>
+          ${ref ? `<div class="reading-ref">${ref}</div>` : ''}
+          <div class="reading-body${dc}">${fmtText(text)}</div>
+        </div>`;
+    }
+
+    function mkDivider(label, chipType) {
+      return `<div class="section-divider"><span class="chip ${chipType}">${label}</span></div>`;
+    }
+
+    function mkEmpty(icon, title, body) {
+      return `<div class="empty-state">
+        <div class="empty-icon">${icon}</div>
+        <div class="empty-title">${title}</div>
+        ${body ? `<div class="empty-body">${body}</div>` : ''}
+      </div>`;
+    }
+
+    function buildBilingual(renderFn) {
+      if (currentLang === 'both') {
+        return renderFn('en') +
+          `<div class="bilingual-divider"><span>☩</span></div>` +
+          renderFn('ar');
+      }
+      return renderFn(currentLang === 'ar' ? 'ar' : 'en');
+    }
+
+    // Patterns that identify attribution / copyright lines
+    const ATTR_RE = [
+      /^©/,                                  // starts with ©
+      /evangelizo\.org/i,                    // Evangelizo credit
+      /dailygospel\.org/i,                   // dailygospel.org
+      /alingilalyawmi\.org/i,                // Arabic Gospel site
+      /^نصوص\s+القراءات/,                   // Arabic "texts of readings"
+      /مأخوذة\s+من/,                        // Arabic "taken from"
+      /^\[?[a-z0-9.-]+\.(org|com|net)\]?$/i // bare domain names like "example.org"
+    ];
+    function isAttr(line) { return ATTR_RE.some(re => re.test(line.trim())); }
+
+    /** Escapes raw text so it can never inject HTML tags into the DOM */
+    function esc(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function applyVerseNumberMarkup(text, isArabic) {
+      if (!isArabic) return text;
+      // Only shrink numbers that appear at the very start of a line
+      // (verse-initial format: "١ " or "١٢." or "١)" at start of the string).
+      // This avoids falsely marking psalm-title numbers like "المزمور ٩٩"
+      // or reference numbers inside Bible citations like "غلاطية ٤: ٢٦".
+      return text.replace(/^([٠-٩0-9]+[.):]\s*)/u, '<span class="verse-num">$1</span>');
+    }
+
+    function applyAntiphonMarkup(text) {
+      return text.replace(
+        /^(Ant\.\s*(?:\d+)?\s*:?\s*|Antiphon\s*:?\s*|أنتيفونة(?:\s+[٠-٩0-9]+)?\s*:?\s*|اللازمة\s*:?\s*)/i,
+        '<span class="antiphon-label">$1</span>'
+      );
+    }
+
+    function fmtText(text, opts = {}) {
+      if (!text) return '';
+      // If it already contains safe paragraph markup from our own code, pass through
+      if (/^<p[\s>]/.test(text.trimStart())) return text;
+
+      const formatLine = (line) => {
+        const trimmed = line.trim();
+        if (!trimmed) return '';
+        if (isAttr(trimmed)) return `<p class="reading-attr">${esc(trimmed)}</p>`;
+
+        let safe = esc(trimmed);
+        safe = applyVerseNumberMarkup(safe, !!opts.isArabic);
+
+        // Antiphon lines (Ant. / أنتيفونة)
+        const isAntiphon = /^(Ant\.|Antiphon|أنتيفونة|اللازمة)/i.test(trimmed);
+        if (isAntiphon) {
+          safe = applyAntiphonMarkup(safe);
+          return `<p class="antiphon-line">${safe}</p>`;
+        }
+
+        // Response lines — lines starting with "—" (em-dash), as in versicle/response
+        const isResponse = /^—/.test(trimmed);
+        if (isResponse) {
+          return `<p class="prayer-line response-line">${safe}</p>`;
+        }
+
+        return `<p class="prayer-line">${safe}</p>`;
+      };
+
+      if (opts.prayerMode) {
+        return text.split(/\n+/)
+          .map(formatLine)
+          .filter(Boolean)
+          .join('');
+      }
+
+      return text.split(/\n\n+/)
+        .map(p => p.trim()).filter(Boolean)
+        .map(p => isAttr(p) ? `<p class="reading-attr">${esc(p)}</p>` : `<p>${esc(p).replace(/\n/g, '<br>')}</p>`)
+        .join('');
+    }
+
+    // ══════════════════════════════════════
+    // OFFLINE LITURGICAL SEASON CALCULATOR
+    // Computes Easter by the Gregorian algorithm and derives all major
+    // liturgical seasons so the season strip is correct BEFORE any data
+    // is downloaded.
+    // ══════════════════════════════════════
+
+    /** Gregorian Easter Sunday for any year (returns a Date) */
+    function computeEaster(y) {
+      const a=y%19, b=Math.floor(y/100), c=y%100;
+      const d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25);
+      const g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30;
+      const i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7;
+      const m=Math.floor((a+11*h+22*l)/451);
+      const mo=Math.floor((h+l-7*m+114)/31);
+      const dy=((h+l-7*m+114)%31)+1;
+      return new Date(y, mo-1, dy);
+    }
+
+    function addDays(d, n) { const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+
+    /**
+     * Returns the approximate liturgical season for a given YYYY-MM-DD date.
+     * Used to populate the season strip without waiting for an API call.
+     */
+    function estimateSeasonFromDate(dateKey) {
+      const d  = new Date(dateKey + 'T00:00:00');
+      const y  = d.getFullYear();
+      const ar = currentLang === 'ar';
+
+      const easter    = computeEaster(y);
+      const ashWed    = addDays(easter, -46);
+      const pentecost = addDays(easter,  49);
+
+      // First Sunday of Advent = first Sunday on or after Nov 27
+      const nov27    = new Date(y, 10, 27);
+      const dow27    = nov27.getDay();
+      const advent   = dow27 === 0 ? nov27 : addDays(nov27, 7 - dow27);
+
+      // Christmas season: Dec 25 through Jan 12 (Baptism of the Lord area)
+      const inChristmas = (d.getMonth() === 11 && d.getDate() >= 25) ||
+                          (d.getMonth() === 0  && d.getDate() <= 12);
+
+      if (d >= ashWed    && d < easter)     return { season: ar?'زمن الصوم'   :'Lenten Season',    hex:'var(--season-lent)'     };
+      if (d >= easter    && d <= pentecost) return { season: ar?'زمن الفصح'   :'Easter Season',    hex:'var(--season-easter)'   };
+      if (d >= advent    && d.getMonth()===11) return { season: ar?'زمن المجيء':'Advent Season',    hex:'var(--season-advent)'   };
+      if (inChristmas)                      return { season: ar?'زمن الميلاد' :'Christmas Season',  hex:'var(--season-ordinary)' };
+      return                                       { season: ar?'زمن عادي'    :'Ordinary Time',     hex:'var(--season-ordinary)' };
+    }
+
+    // ══════════════════════════════════════
+    // LITURGICAL HELPERS
+    // ══════════════════════════════════════
+    function getLiturgicalHex(feast) {
+      if (!feast) return 'var(--season-ordinary)';
+      const f = feast.toLowerCase();
+      if (f.includes('lent') && !f.includes('sunday')) return 'var(--season-lent)';
+      if (f.includes('advent'))   return 'var(--season-advent)';
+      if (f.includes('easter') || f.includes('christmas') || f.includes('solemnity')) return '#94a3b8';
+      if (f.includes('palm') || f.includes('good friday') || f.includes('pentecost') || f.includes('martyr')) return 'var(--season-red)';
+      if (f.includes('rose') || f.includes('pink') || f.includes('gaudete') || f.includes('laetare')) return 'var(--season-rose)';
+      return 'var(--season-ordinary)';
+    }
+
+    function getLiturgicalColorKey(feast) {
+      if (!feast) return 'green';
+      const f = feast.toLowerCase();
+      if (f.includes('lent') || f.includes('advent')) return 'purple';
+      if (f.includes('easter') || f.includes('christmas')) return 'white';
+      if (f.includes('palm') || f.includes('good friday') || f.includes('pentecost') || f.includes('martyr')) return 'red';
+      if (f.includes('rose') || f.includes('pink')) return 'rose';
+      return 'green';
+    }
+
+    function getSeasonName(feast) {
+      if (!feast) return currentLang === 'ar' ? 'زمن عادي' : 'Ordinary Time';
+      const f = feast.toLowerCase();
+      const ar = currentLang === 'ar';
+      if (f.includes('lent'))      return ar ? 'زمن الصوم'    : 'Lenten Season';
+      if (f.includes('advent'))    return ar ? 'زمن المجيء'   : 'Advent Season';
+      if (f.includes('easter'))    return ar ? 'زمن الفصح'    : 'Easter Season';
+      if (f.includes('christmas')) return ar ? 'زمن الميلاد'  : 'Christmas Season';
+      if (f.includes('pentecost')) return ar ? 'العنصرة'      : 'Pentecost';
+      if (f.includes('ordinary'))  return ar ? 'زمن عادي'     : 'Ordinary Time';
+      const trimmed = feast.length > 36 ? feast.substring(0, 34) + '…' : feast;
+      return trimmed;
+    }
+
+    function updateSeasonStrip(feast) {
+      const hex = getLiturgicalHex(feast);
+      document.getElementById('season-strip').style.background =
+        `linear-gradient(90deg, ${hex} 0%, transparent 100%)`;
+      document.getElementById('season-dot').style.background = hex;
+      document.getElementById('season-name').textContent = getSeasonName(feast);
+    }
+
+    // ══════════════════════════════════════
+    // CALENDAR
+    // ══════════════════════════════════════
+    function renderCalendar() {
+      const grid = document.getElementById('cal-grid');
+      if (!grid) return;
+      const year   = currentViewDate.getFullYear();
+      const month  = currentViewDate.getMonth();
+      const locale = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+
+      document.getElementById('cal-month').textContent =
+        new Intl.DateTimeFormat(locale, { month:'long', year:'numeric' }).format(currentViewDate);
+
+      const wdays = currentLang === 'ar'
+        ? ['أح','اث','ث','أر','خ','ج','س']
+        : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+      grid.innerHTML = wdays.map(d => `<div class="cal-weekday">${d}</div>`).join('');
+
+      const firstDay    = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today       = fmtDate(new Date());
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += '<div class="cal-day empty"></div>';
+      }
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dk  = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const cached = localCache[dk];
+        const color  = cached ? getLiturgicalColorKey(cached.feast) : null;
+        let cls = 'cal-day';
+        if (dk === today)            cls += ' today';
+        if (dk === selectedDateKey)  cls += ' selected';
+        if (cached)                  cls += ' has-data';
+        const ca = color ? `data-color="${color}"` : '';
+        grid.innerHTML += `<div class="${cls}" ${ca} onclick="selectDate('${dk}');switchTab('home')">${d}</div>`;
+      }
+    }
+
+    function changeMonth(delta) {
+      currentViewDate.setMonth(currentViewDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    // ══════════════════════════════════════
+    // SUPABASE
+    // ══════════════════════════════════════
+    async function syncWithSupabase() {
+      // Supabase not configured — show a neutral "online" status, not an error
+      if (!supabase) {
+        setSyncStatus(true, currentLang === 'ar' ? 'متصل' : 'Connected');
+        return;
+      }
+      if (!(await isReallyOnline())) {
+        setSyncStatus(false, currentLang === 'ar' ? 'غير متصل' : 'Offline');
+        return;
+      }
+      setSyncStatus(null, currentLang === 'ar' ? 'جارٍ المزامنة…' : 'Syncing…');
+      try {
+        const start = fmtDate(new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() - 1, 1));
+        const end   = fmtDate(new Date(currentViewDate.getFullYear(), currentViewDate.getMonth() + 3, 0));
+        const { data, error } = await supabase
+          .from('daily_readings').select('*')
+          .gte('reading_date', start).lte('reading_date', end);
+        if (data && !error) {
+          data.forEach(item => { localCache[item.reading_date] = item; });
+          localStorage.setItem('readings_cache', JSON.stringify(localCache));
+          const t = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+          setSyncStatus(true, (currentLang === 'ar' ? 'مباشر · ' : 'Live · ') + t);
+          renderCalendar();
+          if (selectedDateKey) onDateChange(selectedDateKey);
+        } else {
+          setSyncStatus(false, currentLang === 'ar' ? 'خطأ في المزامنة' : 'Sync error');
+        }
+      } catch(e) {
+        setSyncStatus(false, currentLang === 'ar' ? 'غير متصل' : 'Offline');
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // EVANGELIZO LIVE API  —  feed.evangelizo.org/v2/reader.php
+    // Official Roman Ordinary Calendar source for English (AM) + Arabic (AR).
+    // English readings: USCCB-sourced text.
+    // Arabic readings:  Arabic Catholic Bible (Dar el-Machreq, Beirut).
+    //
+    // Fetch strategy (works on GitHub Pages — no server needed):
+    //  1. Local proxy  — only when running local-dev-server.js (localhost)
+    //  2. Direct HTTPS — works if external APIs allow CORS
+    //  3. Public CORS proxies — fallback for GitHub Pages / production
+    // ══════════════════════════════════════════════════════════════════════
+
+    const USE_LOCAL_PROXY = /localhost|127\.0\.0\.1/.test(location.hostname);
+    const OUR_PROXY      = '/api/evang';   // used only when local-dev-server.js is running
+    const EVANG          = 'https://feed.evangelizo.org/v2/reader.php';
+    const CORS_PROXIES   = [
+      'https://api.allorigins.win/raw?url=',
+      'https://corsproxy.io/?',
+    ];
+
+    /**
+     * Cleans Evangelizo response text:
+     * - Strips markdown links [text](url) → text
+     * - Strips HTML tags
+     * - Decodes common HTML entities
+     * - Removes the duplicated paragraph the API sometimes appends
+     */
+    function cleanEvang(raw) {
+      if (!raw) return '';
+      let s = raw
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [text](url) → text
+        .replace(/<[^>]*>/g, '')                  // strip HTML tags
+        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"')
+        // Remove Evangelizo API boilerplate footers that appear even when there's no reading
+        .replace(/Copyright\s*©[^\n]*/gi, '')
+        .replace(/To receive the Gospel[^\n]*/gi, '')
+        .replace(/لتلقي الإنجيل[^\n]*/gi, '')     // Arabic subscription footer
+        .trim();
+
+      // Deduplicate: API often returns the full text twice, separated by \n\n
+      const paras = s.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+      const seen = new Set();
+      const unique = paras.filter(p => { if (seen.has(p)) return false; seen.add(p); return true; });
+      return unique.join('\n\n');
+    }
+
+    /**
+     * Fetches a single Evangelizo field.
+     * Layer 1: our own Netlify proxy  (same-origin, zero CORS friction)
+     * Layer 2: direct HTTPS to Evangelizo  (works if their server allows CORS)
+     * Layer 3: allorigins.win CORS proxy  (public fallback)
+     * Returns '' on any error or if the API returns an error message.
+     */
+    async function evFetch(dateStr, type, langCode, content = '') {
+      const qs  = `date=${dateStr}&type=${type}&lang=${langCode}${content ? '&content=' + content : ''}`;
+
+      const tryUrl = async (u) => {
+        try {
+          const r = await fetch(u, { signal: AbortSignal.timeout(12000) });
+          if (!r.ok) return '';
+          const t = await r.text();
+          if (!t || t.includes('Reader Evangelizo Error') || t.startsWith('Proxy error')) return '';
+          return cleanEvang(t);
+        } catch { return ''; }
+      };
+
+      // Layer 1 — local proxy (only when local-dev-server is running)
+      if (USE_LOCAL_PROXY) {
+        const viaProxy = await tryUrl(`${OUR_PROXY}?${qs}`);
+        if (viaProxy) return viaProxy;
+      }
+
+      // Layer 2 — direct Evangelizo HTTPS
+      const direct = await tryUrl(`${EVANG}?${qs}`);
+      if (direct) return direct;
+
+      // Layer 3 — public CORS proxy fallback (GitHub Pages)
+      const evangUrl = `${EVANG}?${qs}`;
+      for (const proxy of CORS_PROXIES) {
+        const res = await tryUrl(proxy + encodeURIComponent(evangUrl));
+        if (res) return res;
+      }
+      return '';
+    }
+
+    async function proxyTextFetch(url) {
+      // Layer 1 — local proxy (localhost / Netlify)
+      if (USE_LOCAL_PROXY) {
+        try {
+          const r = await fetch(`${OUR_PROXY}?url=${encodeURIComponent(url)}`, {
+            signal: AbortSignal.timeout(20000)
+          });
+          if (r.ok) {
+            const t = await r.text();
+            if (t && !t.includes('Proxy error')) return t;
+          }
+        } catch {}
+      }
+      // Layer 2 — public CORS proxies (GitHub Pages)
+      for (const proxy of CORS_PROXIES) {
+        try {
+          const proxyUrl = proxy + encodeURIComponent(url);
+          const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) });
+          if (r.ok) {
+            const t = await r.text();
+            if (t && !t.startsWith('<!') && !t.includes('Proxy error')) return t;
+          }
+        } catch {}
+      }
+      return '';
+    }
+
+    async function proxyJsonFetch(url) {
+      const raw = await proxyTextFetch(url);
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function decodeHtmlEntities(text) {
+      const area = document.createElement('textarea');
+      area.innerHTML = text;
+      return area.value;
+    }
+
+    function cleanOfficeText(text) {
+      return (text || '')
+        .replace(/\u00a0/g, ' ')
+        .replace(/\s+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+    }
+
+    function extractSection(text, startMarker, endMarkers, includeStart = true) {
+      const startIdx = text.indexOf(startMarker);
+      if (startIdx < 0) return '';
+      const base = includeStart ? startIdx : startIdx + startMarker.length;
+      let endIdx = text.length;
+      for (const marker of endMarkers) {
+        const idx = text.indexOf(marker, base);
+        if (idx >= 0 && idx < endIdx) endIdx = idx;
+      }
+      return cleanOfficeText(text.slice(base, endIdx));
+    }
+
+    function matchRef(text, patterns, fallback = '') {
+      for (const re of patterns) {
+        const m = text.match(re);
+        if (m) return m[0].trim();
+      }
+      return fallback;
+    }
+
+    function htmlToIbreviaryText(html) {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const root = doc.querySelector('#contenuto .inner');
+      if (!root) return '';
+
+      const blocks = [];
+      root.querySelectorAll('h1, h2, h3, p').forEach((el) => {
+        let s = el.innerHTML
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/p>/gi, '\n')
+          .replace(/<a[^>]*>/gi, '')
+          .replace(/<\/a>/gi, '')
+          .replace(/<[^>]+>/g, '');
+        s = decodeHtmlEntities(s);
+        // Convert Roman Breviary cantillation markers to line-breaks so psalm
+        // verses display on separate lines instead of running together.
+        // † = mediant (half-stop)   * = full stop between hemistichs
+        s = s.replace(/\s*†\s*/g, '\n').replace(/\s+\*\s*/g, '\n');
+        s = cleanOfficeText(s);
+        if (s && s !== '******') blocks.push(s);
+      });
+
+      return cleanOfficeText(blocks.join('\n\n'));
+    }
+
+    /**
+     * Cleans a parsed hymn block:
+     *  - strips "Alternate Hymns" header prefix (English)
+     *  - removes Tune/Music/Text attribution lines
+     *  - removes "or:" alternative-tune sections
+     *  - converts Arabic "/" hemistich dividers to line-breaks
+     */
+    function cleanHymnText(text, isAr) {
+      if (!text) return '';
+      const s = isAr
+        ? text.replace(/\s*\/\s*/g, '\n')
+        : text
+            .replace(/^Alternate\s+Hymns?\s*/i, '')
+            .replace(/\nor:\s*\n[\s\S]*$/i, '')
+            .replace(/\n(?:Tune|Music|Text|Translation|Mode\s+\w|Continue\s+with)[^\n]*/gi, '');
+      return cleanOfficeText(s.trim());
+    }
+
+    /**
+     * Strips parenthetical rubric instructions that iBreviary embeds in the page.
+     * Lines that consist entirely of a parenthesised sentence are rubrics
+     * (e.g. "If the Invitatory is not said…"), not prayable content.
+     */
+    function stripRubrics(text) {
+      return text
+        .replace(/^[ \t]*\([^)]{10,}\)[ \t]*\.?[ \t]*$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
+    /**
+     * Removes the "Psalm Prayer" theological meditation block that iBreviary
+     * (English) appends after each psalm before the repeat of the antiphon.
+     */
+    function stripPsalmPrayer(text) {
+      return text.replace(/\bPsalm\s+Prayer\b[\s\S]*?(?=\bAnt\b|\bREADING\b|$)/i, '').trim();
+    }
+
+    /**
+     * In iBreviary, each psalm section opens AND closes with the same antiphon.
+     * We only display it once (at the top). This removes the trailing duplicate.
+     */
+    function removeDuplicateAntiphon(text, openingMarker) {
+      if (!openingMarker || !text) return text;
+      const firstIdx = text.indexOf(openingMarker);
+      if (firstIdx < 0) return text;
+      const lastIdx = text.lastIndexOf(openingMarker);
+      // Only strip if the duplicate is in the second half of the text
+      if (lastIdx > firstIdx && lastIdx > text.length * 0.5) {
+        return cleanOfficeText(text.slice(0, lastIdx));
+      }
+      return text;
+    }
+
+    function parseIbreviaryOffice(text, lang) {
+      const isAr = lang === 'ar';
+      text = stripRubrics(text);
+
+      if (isAr) {
+        // Opening versicle — the "God come to my aid" call that precedes the Hymn.
+        // It appears right before "النشيد" (hymn section) and starts with "اللَّهُمّ".
+        const hymnIdx = text.indexOf('النشيد');
+        const introStart = hymnIdx >= 0 ? text.lastIndexOf('اللَّهُمّ', hymnIdx) : -1;
+        const intro = (introStart >= 0 && hymnIdx > introStart)
+          ? cleanOfficeText(text.slice(introStart, hymnIdx))
+          : '';
+
+        // Daily Hymn — from after "النشيد" heading to the "المزامير" psalms section
+        const hymnEnd = Math.min(
+          ...[text.indexOf('المزامير', hymnIdx + 1), text.indexOf('أنتيفونة ١:', hymnIdx + 1)]
+            .filter(i => i > hymnIdx)
+            .concat([text.length])
+        );
+        let hymn = hymnIdx >= 0 && hymnEnd > hymnIdx
+          ? text.slice(hymnIdx + 'النشيد'.length, hymnEnd)
+          : '';
+        hymn = cleanHymnText(hymn, true);
+
+        let psalm1 = extractSection(text, 'أنتيفونة ١:', ['أنتيفونة ٢:']);
+        psalm1 = removeDuplicateAntiphon(psalm1, 'أنتيفونة ١:');
+
+        let psalm2 = extractSection(text, 'أنتيفونة ٢:', ['أنتيفونة ٣:']);
+        psalm2 = removeDuplicateAntiphon(psalm2, 'أنتيفونة ٢:');
+
+        let psalm3 = extractSection(text, 'أنتيفونة ٣:', ['القراءة']);
+        psalm3 = removeDuplicateAntiphon(psalm3, 'أنتيفونة ٣:');
+
+        // Daily Intercessions — between "الأدعية" and "أبانا" (Lord's Prayer)
+        const interStart = text.indexOf('الأدعية');
+        const interEnds  = [text.indexOf('أبانا', interStart), text.lastIndexOf('الصلاة')]
+          .filter(i => i > interStart);
+        const interEnd = interEnds.length ? Math.min(...interEnds) : -1;
+        const intercessions = interStart >= 0 && interEnd > interStart
+          ? cleanOfficeText(text.slice(interStart + 'الأدعية'.length, interEnd))
+          : '';
+
+        // Concluding prayer — use lastIndexOf to avoid matching the page title
+        const prayerMarker   = 'الصلاة';
+        const blessingMarker = 'البركة';
+        const prayerIdx   = text.lastIndexOf(prayerMarker);
+        const blessingIdx = prayerIdx >= 0 ? text.indexOf(blessingMarker, prayerIdx) : -1;
+        let ending = prayerIdx >= 0
+          ? text.slice(prayerIdx + prayerMarker.length, blessingIdx >= 0 ? blessingIdx : text.length)
+          : '';
+        ending = cleanOfficeText(ending.replace(/^[:\s\n—-]+/, ''));
+
+        return {
+          morning_intro: intro,
+          morning_hymn: hymn,
+          morning_intercessions: intercessions,
+          morning_psalm1: psalm1,
+          morning_psalm1_ref: matchRef(psalm1, [/المزمور\s+[^\n]+/]),
+          morning_psalm2: psalm2,
+          morning_psalm2_ref: matchRef(psalm2, [/التسبحة\s+[^\n]+/, /المزمور\s+[^\n]+/]),
+          morning_psalm3: psalm3,
+          morning_psalm3_ref: matchRef(psalm3, [/المزمور\s+[^\n]+/]),
+          morning_ending: ending,
+        };
+      }
+
+      // ── English ─────────────────────────────────────────────────────────────
+      const intro = extractSection(text, 'God, + come to my assistance.', ['HYMN']);
+
+      // Daily Hymn — between HYMN and PSALMODY headings
+      let hymn = extractSection(text, 'HYMN', ['PSALMODY'], false);
+      hymn = cleanHymnText(hymn, false);
+
+      let psalm1 = extractSection(text, 'Ant. 1', ['Ant. 2']);
+      psalm1 = stripPsalmPrayer(psalm1);
+      psalm1 = removeDuplicateAntiphon(psalm1, 'Ant. 1');
+
+      let psalm2 = extractSection(text, 'Ant. 2', ['Ant. 3']);
+      psalm2 = stripPsalmPrayer(psalm2);
+      psalm2 = removeDuplicateAntiphon(psalm2, 'Ant. 2');
+
+      let psalm3 = extractSection(text, 'Ant. 3', ['READING']);
+      psalm3 = stripPsalmPrayer(psalm3);
+      psalm3 = removeDuplicateAntiphon(psalm3, 'Ant. 3');
+
+      // Daily Intercessions — between INTERCESSIONS and THE LORD'S PRAYER
+      const intercessions = extractSection(
+        text, 'INTERCESSIONS', ["THE LORD'S PRAYER", "LORD'S PRAYER"], false
+      );
+
+      // Take only the first form of the concluding prayer (before "Or:")
+      let ending = extractSection(text, 'CONCLUDING PRAYER', ['DISMISSAL'], false);
+      ending = ending.split(/\nOr:\n/i)[0].trim();
+
+      return {
+        morning_intro: intro,
+        morning_hymn: hymn,
+        morning_intercessions: intercessions,
+        morning_psalm1: psalm1,
+        morning_psalm1_ref: matchRef(psalm1, [/Psalm\s+\d+/i, /Canticle:\s+[^\n]+/i]),
+        morning_psalm2: psalm2,
+        morning_psalm2_ref: matchRef(psalm2, [/Canticle:\s+[^\n]+/i, /Psalm\s+\d+/i]),
+        morning_psalm3: psalm3,
+        morning_psalm3_ref: matchRef(psalm3, [/Psalm\s+\d+/i, /Canticle:\s+[^\n]+/i]),
+        morning_ending: ending,
+      };
+    }
+
+    /**
+     * Secondary English source: Universalis.com
+     * Parses the daily Lauds hymn, intercessions, and concluding prayer.
+     * English only — Arabic is handled by iBreviary.
+     * URL: https://universalis.com/YYYYMMDD/i-lauds.htm
+     */
+    async function fetchUniversalisLauds(dateKey) {
+      try {
+        const [y, m, d] = dateKey.split('-');
+        const url = `https://universalis.com/${y}${m}${d}/i-lauds.htm`;
+        const html = await proxyTextFetch(url);
+        if (!html || html.length < 200 || !html.includes('universalis')) return null;
+
+        const text = htmlToIbreviaryText(html);
+
+        // Hymn: from "Hymn" section header to first psalm/canticle heading
+        let hymn = extractSection(text, 'Hymn', ['Psalm ', 'Canticle', 'Scripture Reading'], false);
+        hymn = cleanHymnText(hymn, false);
+
+        // Intercessions: between "Prayers and intercessions" and "Our Father"
+        const intercessions = extractSection(
+          text,
+          'Prayers and intercessions',
+          ['Our Father, who art', 'Our Father,\n', 'Our Father\n'],
+          false
+        );
+
+        // Concluding prayer: the block between the Our Father's last line and the blessing
+        const ourFatherEnd = text.indexOf('but deliver us from evil');
+        const blessingIdx  = text.lastIndexOf('The Lord bless us');
+        const endingStart  = ourFatherEnd >= 0 ? text.indexOf('\n', ourFatherEnd + 25) : -1;
+        const ending       = endingStart >= 0 && blessingIdx > endingStart
+          ? cleanOfficeText(text.slice(endingStart, blessingIdx))
+          : '';
+
+        if (!hymn && !intercessions && !ending) {
+          console.warn('[fetchUniversalisLauds] Could not parse any sections');
+          return null;
+        }
+        console.log('[fetchUniversalisLauds] OK — hymn:', !!hymn, 'intercessions:', !!intercessions);
+        return { hymn, intercessions, ending };
+      } catch (e) {
+        console.warn('[fetchUniversalisLauds] Error:', e.message);
+        return null;
+      }
+    }
+
+    /**
+     * Fetches the full Morning Prayer (Lauds) structure for a given date.
+     *
+     * Source priority (ensures EN/AR always match):
+     *
+     *  Tier 1 — iBreviary.com (bilingual EN + AR from the same Roman Calendar)
+     *           Perfect match: same day's prayer in both languages.
+     *
+     *  Tier 2 — Universalis.com (English only) as supplement
+     *           Used when iBreviary succeeds for psalms but hymn/intercessions
+     *           are empty; fills the English gaps. Arabic keeps iBreviary content.
+     *
+     *  Tier 3 — Static prayers (MORNING_OPENING + CLOSING_THANKS)
+     *           Built-in fallback for both EN and AR. Same structure in both
+     *           languages — guaranteed to always match and always work.
+     */
+    async function fetchMorningOffice(dateKey) {
+      const d = new Date(dateKey + 'T00:00:00');
+      const day   = d.getDate();
+      const month = d.getMonth() + 1;
+      const year  = d.getFullYear();
+      const qs    = `d=${day}&mese=${month}&anno=${year}&s=lodi`;
+
+      // ── Tier 1 + Tier 2 run in parallel ──────────────────────────────────
+      // iBreviary (bilingual EN+AR) and Universalis (English supplement) are
+      // fetched simultaneously so the total wait is max(t1, t2), not t1 + t2.
+      let en = {}, ar = {};
+
+      const [ibrResult, uni] = await Promise.all([
+        // ── iBreviary (EN + AR) ─────────────────────────────────────────
+        (async () => {
+          try {
+            const [enHtml, arHtml] = await Promise.all([
+              proxyTextFetch(`https://www.ibreviary.com/m2/breviario.php?lang=en&${qs}`),
+              proxyTextFetch(`https://www.ibreviary.com/m2/breviario.php?lang=ar&${qs}`),
+            ]);
+            const parsedEn = (enHtml && /iBreviary/i.test(enHtml))
+              ? parseIbreviaryOffice(htmlToIbreviaryText(enHtml), 'en')
+              : null;
+            const parsedAr = (arHtml && /iBreviary/i.test(arHtml))
+              ? parseIbreviaryOffice(htmlToIbreviaryText(arHtml), 'ar')
+              : null;
+            return { en: parsedEn, ar: parsedAr };
+          } catch (e) {
+            console.warn('[fetchMorningOffice] iBreviary error:', e.message);
+            return { en: null, ar: null };
+          }
+        })(),
+        // ── Universalis (English supplement) ────────────────────────────
+        fetchUniversalisLauds(dateKey),
+      ]);
+
+      en = ibrResult?.en || {};
+      ar = ibrResult?.ar || {};
+
+      // ── Merge results ─────────────────────────────────────────────────────
+      // For the three dynamic morning components (hymn/intercessions/collect),
+      // we enforce bilingual parity:
+      // - if one language is missing, clear both and let the static bilingual
+      //   fallback render identically in EN + AR.
+      const hymnEn = en.morning_hymn || uni?.hymn || '';
+      const hymnAr = ar.morning_hymn || '';
+      const interEn = en.morning_intercessions || uni?.intercessions || '';
+      const interAr = ar.morning_intercessions || '';
+      const endEn = en.morning_ending || uni?.ending || '';
+      const endAr = ar.morning_ending || '';
+
+      const pair = (left, right) => (left && right) ? [left, right] : ['', ''];
+      const [finalHymnEn, finalHymnAr] = pair(hymnEn, hymnAr);
+      const [finalInterEn, finalInterAr] = pair(interEn, interAr);
+      const [finalEndEn, finalEndAr] = pair(endEn, endAr);
+
+      const merged = {
+        morning_hymn_en:  finalHymnEn,
+        morning_hymn_ar:  finalHymnAr,
+        morning_intercessions_en: finalInterEn,
+        morning_intercessions_ar: finalInterAr,
+        morning_psalm1_en: en.morning_psalm1 || '',
+        morning_psalm1_ar: ar.morning_psalm1 || '',
+        morning_psalm1_ref_en: en.morning_psalm1_ref || '',
+        morning_psalm1_ref_ar: ar.morning_psalm1_ref || '',
+        morning_psalm2_en: en.morning_psalm2 || '',
+        morning_psalm2_ar: ar.morning_psalm2 || '',
+        morning_psalm2_ref_en: en.morning_psalm2_ref || '',
+        morning_psalm2_ref_ar: ar.morning_psalm2_ref || '',
+        morning_psalm3_en: en.morning_psalm3 || '',
+        morning_psalm3_ar: ar.morning_psalm3 || '',
+        morning_psalm3_ref_en: en.morning_psalm3_ref || '',
+        morning_psalm3_ref_ar: ar.morning_psalm3_ref || '',
+        morning_ending_en: finalEndEn,
+        morning_ending_ar: finalEndAr,
+      };
+
+      // Return null only if absolutely nothing useful was retrieved
+      const hasAnything = merged.morning_psalm1_en || merged.morning_psalm1_ar
+        || merged.morning_hymn_en || merged.morning_intercessions_en
+        || uni;
+      if (!hasAnything) {
+        console.warn('[fetchMorningOffice] All sources (iBreviary + Universalis) returned empty');
+        return null;
+      }
+
+      return merged;
+    }
+
+    /**
+     * Parses iBreviary Evening Prayer (Vespers) into one readable block.
+     * We keep this as a single text block because the UI currently renders
+     * Evening Prayer as one card (not step-by-step like Morning Prayer).
+     */
+    function parseIbreviaryEvening(text, lang) {
+      const isAr = lang === 'ar';
+      text = stripRubrics(text);
+
+      if (isAr) {
+        const parts = [];
+        const hymnIdx = text.indexOf('النشيد');
+        const introStart = hymnIdx >= 0 ? text.lastIndexOf('اللَّهُمّ', hymnIdx) : -1;
+        const intro = (introStart >= 0 && hymnIdx > introStart)
+          ? cleanOfficeText(text.slice(introStart, hymnIdx))
+          : '';
+
+        let hymn = '';
+        if (hymnIdx >= 0) {
+          const hymnEnd = Math.min(
+            ...[text.indexOf('المزامير', hymnIdx + 1), text.indexOf('أنتيفونة ١:', hymnIdx + 1)]
+              .filter(i => i > hymnIdx)
+              .concat([text.length])
+          );
+          hymn = cleanHymnText(text.slice(hymnIdx + 'النشيد'.length, hymnEnd), true);
+        }
+
+        let ps1 = extractSection(text, 'أنتيفونة ١:', ['أنتيفونة ٢:']);
+        let ps2 = extractSection(text, 'أنتيفونة ٢:', ['أنتيفونة ٣:']);
+        let ps3 = extractSection(text, 'أنتيفونة ٣:', ['القراءة', 'الأدعية', 'الصلاة']);
+        ps1 = removeDuplicateAntiphon(ps1, 'أنتيفونة ١:');
+        ps2 = removeDuplicateAntiphon(ps2, 'أنتيفونة ٢:');
+        ps3 = removeDuplicateAntiphon(ps3, 'أنتيفونة ٣:');
+
+        const interStart = text.indexOf('الأدعية');
+        const interEnds = [text.indexOf('أبانا', interStart), text.lastIndexOf('الصلاة')]
+          .filter(i => i > interStart);
+        const interEnd = interEnds.length ? Math.min(...interEnds) : -1;
+        const inter = interStart >= 0 && interEnd > interStart
+          ? cleanOfficeText(text.slice(interStart + 'الأدعية'.length, interEnd))
+          : '';
+
+        const prayerMarker = 'الصلاة';
+        const blessingMarker = 'البركة';
+        const prayerIdx = text.lastIndexOf(prayerMarker);
+        const blessingIdx = prayerIdx >= 0 ? text.indexOf(blessingMarker, prayerIdx) : -1;
+        let ending = prayerIdx >= 0
+          ? text.slice(prayerIdx + prayerMarker.length, blessingIdx >= 0 ? blessingIdx : text.length)
+          : '';
+        ending = cleanOfficeText(ending.replace(/^[:\s\n—-]+/, ''));
+
+        if (intro) parts.push('الافتتاح\n\n' + intro);
+        if (hymn) parts.push('النشيد\n\n' + hymn);
+        if (ps1) parts.push('المزمور الأوّل\n\n' + ps1);
+        if (ps2) parts.push('المزمور الثاني\n\n' + ps2);
+        if (ps3) parts.push('المزمور الثالث\n\n' + ps3);
+        if (inter) parts.push('الأدعية\n\n' + inter);
+        if (ending) parts.push('صلاة الختام\n\n' + ending);
+
+        return parts.join('\n\n');
+      }
+
+      const parts = [];
+      const intro = extractSection(text, 'God, + come to my assistance.', ['HYMN']);
+      let hymn = extractSection(text, 'HYMN', ['PSALMODY'], false);
+      hymn = cleanHymnText(hymn, false);
+
+      let ps1 = extractSection(text, 'Ant. 1', ['Ant. 2']);
+      let ps2 = extractSection(text, 'Ant. 2', ['Ant. 3']);
+      let ps3 = extractSection(text, 'Ant. 3', ['READING', 'INTERCESSIONS', "THE LORD'S PRAYER"]);
+      ps1 = stripPsalmPrayer(removeDuplicateAntiphon(ps1, 'Ant. 1'));
+      ps2 = stripPsalmPrayer(removeDuplicateAntiphon(ps2, 'Ant. 2'));
+      ps3 = stripPsalmPrayer(removeDuplicateAntiphon(ps3, 'Ant. 3'));
+
+      const inter = extractSection(text, 'INTERCESSIONS', ["THE LORD'S PRAYER", "LORD'S PRAYER"], false);
+      let ending = extractSection(text, 'CONCLUDING PRAYER', ['DISMISSAL'], false);
+      ending = ending.split(/\nOr:\n/i)[0].trim();
+
+      if (intro) parts.push('Opening\n\n' + intro);
+      if (hymn) parts.push('Hymn\n\n' + hymn);
+      if (ps1) parts.push('First Psalm\n\n' + ps1);
+      if (ps2) parts.push('Second Psalm\n\n' + ps2);
+      if (ps3) parts.push('Third Psalm\n\n' + ps3);
+      if (inter) parts.push('Intercessions\n\n' + inter);
+      if (ending) parts.push('Concluding Prayer\n\n' + ending);
+
+      return parts.join('\n\n');
+    }
+
+    /** Real Evening Prayer (Vespers) from iBreviary in EN + AR. */
+    async function fetchEveningOffice(dateKey) {
+      const d = new Date(dateKey + 'T00:00:00');
+      const day   = d.getDate();
+      const month = d.getMonth() + 1;
+      const year  = d.getFullYear();
+      const qs    = `d=${day}&mese=${month}&anno=${year}&s=vespri`;
+      try {
+        const [enHtml, arHtml] = await Promise.all([
+          proxyTextFetch(`https://www.ibreviary.com/m2/breviario.php?lang=en&${qs}`),
+          proxyTextFetch(`https://www.ibreviary.com/m2/breviario.php?lang=ar&${qs}`),
+        ]);
+        const en = (enHtml && /iBreviary/i.test(enHtml))
+          ? parseIbreviaryEvening(htmlToIbreviaryText(enHtml), 'en')
+          : '';
+        const ar = (arHtml && /iBreviary/i.test(arHtml))
+          ? parseIbreviaryEvening(htmlToIbreviaryText(arHtml), 'ar')
+          : '';
+        if (!en && !ar) return null;
+        return { evening_prayer_en: en, evening_prayer_ar: ar };
+      } catch (e) {
+        console.warn('[fetchEveningOffice]', e.message);
+        return null;
+      }
+    }
+
+    /**
+     * Fetches the full biography of the Saint of the Day from Evangelizo.
+     *
+     * Flow:
+     *  1. Fetch `type=saint` raw text  — it embeds a link with the saint UUID
+     *  2. Extract the UUID from that link
+     *  3. Fetch `display_saint.php?id=UUID` (try direct, then CORS proxy)
+     *  4. Strip HTML, parse out the biographical paragraphs
+     *
+     * Biography is always in English (Evangelizo only provides EN bios).
+     */
+    async function fetchSaintBio(dateStr) {
+      try {
+        const tryGet = async (u) => {
+          try {
+            const r = await fetch(u, { signal: AbortSignal.timeout(12000) });
+            return r.ok ? await r.text() : '';
+          } catch { return ''; }
+        };
+
+        // 1. Get the raw saint API response which contains the biography page link
+        const saintUrl = `${EVANG}?date=${dateStr}&type=saint&lang=AM`;
+        let raw = await tryGet(`${OUR_PROXY}?date=${dateStr}&type=saint&lang=AM`);
+        if (!raw) raw = await tryGet(saintUrl);
+        if (!raw) raw = await tryGet(CORS_PROXY + encodeURIComponent(saintUrl));
+        if (!raw) return '';
+
+        // 2. Extract the UUID from the embedded link
+        //    Raw response format:
+        //    [Saint Name](http://feed.evangelizo.org/v2/display_saint.php?id=UUID&amp;language=AM) ...
+        const idMatch = raw.match(/display_saint\.php\?id=([0-9a-f-]{36})/i);
+        if (!idMatch) return '';
+
+        // 3. Fetch the biography page via our proxy, then direct, then CORS proxy
+        const bioUrl     = `https://feed.evangelizo.org/v2/display_saint.php?id=${idMatch[1]}&language=AM`;
+        const proxyBioUrl = `${OUR_PROXY}?url=${encodeURIComponent(bioUrl)}`;
+        let bioHtml = await tryGet(proxyBioUrl);
+        if (!bioHtml) bioHtml = await tryGet(bioUrl);
+        if (!bioHtml) bioHtml = await tryGet(CORS_PROXY + encodeURIComponent(bioUrl));
+        if (!bioHtml) return '';
+
+        // 4. Convert HTML → plain text
+        const plain = bioHtml
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/p>/gi, '\n').replace(/<\/div>/gi, '\n')
+          .replace(/<[^>]+>/g, '')
+          .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#[0-9]+;/g, ' ');
+
+        // 5. Parse line-by-line: collect paragraphs that come after the
+        //    "SAINT …" heading and stop at the ©Evangelizo copyright line.
+        const lines = plain.split('\n').map(l => l.trim()).filter(Boolean);
+        const bio   = [];
+        let inBio   = false;
+
+        for (const line of lines) {
+          // Stop at copyright
+          if (/©Evangelizo|©evangelizo|2001-2018/.test(line)) break;
+          // Skip navigation / UI noise
+          if (/^EVANGELIZO$|^Evangelizo$/.test(line)) continue;
+          // The "SAINT NAME..." heading marks the start of the bio section
+          if (!inBio && /^SAINT\s+\w/i.test(line)) { inBio = true; continue; }
+          // Only collect substantive lines (> 40 chars) once we're inside the bio
+          if (inBio && line.length > 40) bio.push(line);
+        }
+
+        return bio.join('\n\n');
+      } catch (e) {
+        console.warn('[fetchSaintBio]', e);
+        return '';
+      }
+    }
+
+    /**
+     * Fetches an Arabic biography for the saint of the day via Wikipedia's
+     * free, CORS-enabled API. Works in three sequential steps:
+     *
+     *  1. Search English Wikipedia for the saint name
+     *  2. Get the Arabic interlanguage link from that English article
+     *  3. Fetch the Arabic intro extract from Arabic Wikipedia
+     *
+     * Returns '' gracefully if the saint is too obscure or Wikipedia has no
+     * Arabic article for them. No API key required (Wikipedia supports origin=*).
+     */
+    async function fetchSaintBioArabic(saintNameEn) {
+      if (!saintNameEn) return '';
+      try {
+        const wikiGet = async (url) => {
+          const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+          return r.ok ? await r.json() : null;
+        };
+
+        // Clean the saint name to a plain searchable form
+        // "St. Eulogius, Martyr († 859)"  →  "Eulogius"
+        // "Saint Katharine Drexel"         →  "Katharine Drexel"
+        const cleaned = saintNameEn
+          .replace(/^(Saints?|Sts?\.)\s+/i, '')       // remove "St." / "Saint" prefix
+          .replace(/\s*\([^)]*\)/g, '')                // remove dates "(† 859)"
+          .split(',')[0]                               // take part before first comma
+          .replace(/\s+(Martyr|Bishop|Pope|Doctor|Abbot|Apostle|Confessor|Virgin|Widow)\b.*/i, '')
+          .trim();
+        if (!cleaned) return '';
+
+        // Step 1 — Search English Wikipedia
+        const searchData = await wikiGet(
+          `https://en.wikipedia.org/w/api.php?action=query&list=search` +
+          `&srsearch=${encodeURIComponent(cleaned + ' saint')}&srnamespace=0&srlimit=3&format=json&origin=*`
+        );
+        const pageTitle = searchData?.query?.search?.[0]?.title;
+        if (!pageTitle) return '';
+
+        // Step 2 — Get Arabic interlanguage link from English article
+        const langData = await wikiGet(
+          `https://en.wikipedia.org/w/api.php?action=query` +
+          `&titles=${encodeURIComponent(pageTitle)}&prop=langlinks&lllang=ar&format=json&origin=*`
+        );
+        const arTitle = Object.values(langData?.query?.pages || {})[0]?.langlinks?.[0]?.['*'];
+        if (!arTitle) return '';
+
+        // Step 3 — Fetch the Arabic intro extract
+        const extractData = await wikiGet(
+          `https://ar.wikipedia.org/w/api.php?action=query` +
+          `&titles=${encodeURIComponent(arTitle)}&prop=extracts&exintro=1&explaintext=1&format=json&origin=*`
+        );
+        const extract = Object.values(extractData?.query?.pages || {})[0]?.extract?.trim() || '';
+        // Cap at ~1800 chars — enough for a good bio without overwhelming the card
+        const bio = extract.length > 1800 ? extract.substring(0, 1800) + '…' : extract;
+
+        // arTitle IS the Arabic saint name (e.g. "القديس يولوجيوس")
+        return { name: arTitle, bio };
+
+      } catch (e) {
+        console.warn('[fetchSaintBioArabic]', e);
+        return { name: '', bio: '' };
+      }
+    }
+
+    /**
+     * Fetches ALL fields for one language in a single Promise.all batch.
+     * Covers: Readings, Psalms, Gospel, Saint, Commentary (morning prayer),
+     *         Liturgical title (opening), for both Morning and Evening prayer.
+     *
+     * langCode: 'AM' = American English, Roman Ordinary Calendar (USCCB)
+     *           'AR' = Arabic,           Roman Ordinary Calendar
+     */
+    async function fetchLangData(dateStr, langCode) {
+      const [
+        feast, liturgic, saint,
+        r1Text, r1Ref,
+        psText, psRef,
+        r2Text, r2Ref,
+        gspText, gspRef,
+        commentText, commentTitle, commentAuthor
+      ] = await Promise.all([
+        evFetch(dateStr, 'feast',       langCode),          // feast name (if any)
+        evFetch(dateStr, 'liturgic_t',  langCode),          // e.g. "Wednesday of the Fourth week of Lent"
+        evFetch(dateStr, 'saint',       langCode),          // Saint of the Day
+        evFetch(dateStr, 'reading',     langCode, 'FR'),    // First Reading text
+        evFetch(dateStr, 'reading_lt',  langCode, 'FR'),    // First Reading reference
+        evFetch(dateStr, 'reading',     langCode, 'PS'),    // Psalm text
+        evFetch(dateStr, 'reading_lt',  langCode, 'PS'),    // Psalm reference
+        evFetch(dateStr, 'reading',     langCode, 'SR'),    // Second Reading (optional)
+        evFetch(dateStr, 'reading_lt',  langCode, 'SR'),    // Second Reading reference
+        evFetch(dateStr, 'reading',     langCode, 'GSP'),   // Gospel text
+        evFetch(dateStr, 'reading_lt',  langCode, 'GSP'),   // Gospel reference
+        evFetch(dateStr, 'comment',     langCode),          // Daily reflection by a saint/theologian
+        evFetch(dateStr, 'comment_t',   langCode),          // Reflection title / Gospel quote
+        evFetch(dateStr, 'comment_a',   langCode),          // Reflection author
+      ]);
+      return {
+        feast, liturgic, saint,
+        r1Text, r1Ref, psText, psRef, r2Text, r2Ref, gspText, gspRef,
+        commentText, commentTitle, commentAuthor
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // MORNING PRAYER STATIC TEXTS
+    //
+    // These three elements are the same every day (or vary only by season),
+    // so we hardcode them rather than relying on an external API:
+    //
+    //  1. INTRODUCTION — the standard opening versicle (Lauds invitatory)
+    //  2. CANTICLE     — the Benedictus (Canticle of Zechariah, Luke 1:68-79)
+    //  3. ENDING PRAYER — the season collect (changes by liturgical season)
+    // ══════════════════════════════════════════════════════════════════════
+
+    // ── Morning Opening Prayer (Offering) ────────────────────────────────────
+    // Devotional prayer consecrating the day to God — prayed before the formal
+    // liturgical versicles. Grounded in the Roman Breviary and Morning Offering
+    // tradition (cf. Ps 5:3; Col 3:17; Rom 12:1). Fixed for every day of the year.
+    // EN and AR match line-for-line so they display identically in bilingual mode.
+    const MORNING_OPENING_EN = `Lord God, Creator of light and life,
+we come before you at the dawn of this new day
+with grateful hearts and humble spirit.
+
+You brought us safely through the night;
+you fill this morning with your presence and your peace.
+We dedicate to you this day —
+our prayers, our work, our joys, and our sufferings —
+in union with your Church throughout the world,
+for your greater glory and the salvation of all people.
+
+Guard our steps, enlighten our minds,
+and let the words of our mouths
+and the work of our hands
+be always pleasing in your sight.
+
+Through Christ our Lord. Amen.`;
+
+    const MORNING_OPENING_AR = `يا ربَّ الإله، خالقَ النورِ والحياة،
+نَحضُرُ أمامَكَ في فجرِ هذا اليومِ الجديد
+بقلوبٍ شاكِرةٍ وروحٍ متَواضِعة.
+
+أنتَ حَفِظتَنا بأمانٍ عَبرَ الليل؛
+أنتَ تملأُ هذا الصباحَ بحضورِكَ وسَلامِك.
+نُكرِّسُ لكَ هذا اليوم —
+صلواتِنا وأعمالَنا وأفراحَنا ومتاعِبَنا —
+في اتِّحادٍ مع كنيستِكَ في أنحاءِ العالَم،
+لِمَجدِكَ الأعظمِ وخلاصِ جَميعِ الناس.
+
+احفَظ خُطانا، أنِرْ عُقولَنا،
+وليكُن كلامُ أفواهِنا
+وعَملُ أيدِينا
+مَرضِيًّا أمامَكَ في كلِّ حين.
+
+بِوساطةِ المسيحِ ربِّنا. آمين.`;
+
+    // ── Closing Thanksgiving Prayer ───────────────────────────────────────────
+    // Prayed after the daily collect — sends the faithful into the day with
+    // gratitude and dedication. Fixed for every day of the year.
+    const CLOSING_THANKS_EN = `Lord Jesus, Light of the world,
+we thank you for this time of prayer,
+for your word that has fed our souls,
+and for your Spirit who prays within us.
+
+You are our Savior, our strength, and our peace.
+As we go forth from this prayer,
+may we carry your love in our hearts
+and your light in our lives,
+serving you in one another throughout this day.
+
+All glory be to you, Father, Son, and Holy Spirit,
+now and for ever. Amen.`;
+
+    const CLOSING_THANKS_AR = `يا ربُّ يسوع، نورَ العالَم،
+نشكُرُكَ على هذا الوقتِ من الصلاة،
+على كَلِمَتِكَ التي أَطعَمَت أرواحَنا،
+وعلى روحِكَ الذي يُصلِّي فِينا.
+
+أنتَ مُخلِّصُنا وقوَّتُنا وسَلامُنا.
+ونَحنُ نَنطلِقُ من هذه الصلاة،
+فَلنَحمِل مَحَبَّتَكَ في قُلوبِنا
+ونورَكَ في حَياتِنا،
+خادِمِينَ إيَّاكَ في بَعضِنا طَوالَ هذا اليوم.
+
+المجدُ كلُّه لكَ، أيُّها الآبُ والابنُ والروحُ القُدُس،
+الآنَ وإلى الأبد. آمين.`;
+
+    // ── Opening Versicles ─────────────────────────────────────────────────────
+    // Roman Rite Liturgy of the Hours: standard opening of Morning Prayer (Lauds).
+    // Line 1: "Lord, open my lips" (Ps 51:15) — the very first words of the day.
+    // Line 2: "O God, come to my assistance" — the Deus in adjutorium.
+    // Line 3: The Gloria Patri doxology.
+    // Source: GILH §§ 34-35; The Liturgy of the Hours (ICEL, 1975) vol. 1.
+    const INTRO_EN = `Lord, open my lips.
+— And my mouth will proclaim your praise.
+
+O God, come to my assistance.
+— O Lord, make haste to help me.
+
+Glory to the Father, and to the Son, and to the Holy Spirit,
+— as it was in the beginning, is now, and will be for ever. Amen.`;
+
+    // Identical structure in Arabic (Roman Catholic, Eastern-rite phrasing)
+    const INTRO_AR = `يا ربُّ، افتَحْ شَفَتَيَّ.
+— وَلْيُخبِرْ فَمي بتَسبِيحِك.
+
+يا اللهُ، بادِرْ إلى مَعونَتي.
+— يا ربُّ، أَسرِعْ إلى إغاثَتي.
+
+المجدُ للآبِ والابنِ والروحِ القُدُس،
+— كما كانَ في البدءِ والآنَ وكلَّ أوان،
+وإلى دَهرِ الدُّهور. آمين.`;
+
+    // Alleluia: added after the Gloria except during Lent
+    const ALLELUIA_EN = '\n\nAlleluia!';
+    const ALLELUIA_AR = '\n\nهللويا!';
+
+    const BENEDICTUS_EN = `Blessed be the Lord, the God of Israel,
+for he has visited and brought redemption to his people.
+He has raised up a horn for our salvation
+within the house of David his servant,
+even as he promised through the mouth of his holy prophets from of old:
+salvation from our enemies
+and from the hand of all who hate us,
+to show mercy to our fathers
+and to be mindful of his holy covenant
+and of the oath he swore to Abraham our father,
+and to grant us that, rescued from the hand of enemies,
+without fear we might worship him
+in holiness and righteousness before him all our days.
+And you, child, will be called prophet of the Most High,
+for you will go before the Lord to prepare his ways,
+to give his people knowledge of salvation
+through the forgiveness of their sins,
+because of the tender mercy of our God
+by which the daybreak from on high will visit us
+to shine on those who sit in darkness and death's shadow,
+to guide our feet into the path of peace.`;
+
+    const BENEDICTUS_AR = `مُبارَكٌ الرَّبُّ إِلَهُ إِسْرائِيل،
+لأَنَّهُ افْتَقَدَ شَعْبَهُ وَصَنَعَ لَهُ فِداءً.
+وَأَقامَ لَنا قَرْناً لِلخَلاص
+في بَيْتِ داوُدَ عَبْدِه،
+كَما تَكَلَّمَ مُنْذُ القِدَمِ بِفَمِ أَنْبِيائِهِ القِدِّيسِين:
+أَنْ يُنَجِّيَنا مِنْ أَعْدائِنا
+وَمِنْ يَدِ جَمِيعِ مُبْغِضِينا،
+وَيَصْنَعَ رَحْمَةً مَعَ آبائِنا
+وَيَذْكُرَ عَهْدَهُ المُقَدَّس،
+الحَلِفَ الَّذي حَلَفَهُ لإِبراهِيمَ أَبِينا،
+أَنْ يُعْطِيَنا — وَنَحْنُ مُنَقَّذُونَ مِنْ يَدِ أَعدائِنا —
+أَنْ نَعبُدَهُ بِلا خَوف
+في القَداسَةِ وَالبِرِّ أَمامَهُ طَوالَ أَيَّامِنا.
+وَأَنْتَ أَيُّها الصَّبِيُّ، نَبِيَّ العَلِيِّ تُدعى،
+لأَنَّكَ تَتَقَدَّمُ أَمامَ وَجْهِ الرَّبِّ لِتُهَيِّئَ طُرُقَه،
+وَتُعَرِّفَ شَعبَهُ الخَلاصَ بِمَغفِرَةِ خَطاياهُم،
+بِرَحمَةِ إِلَهِنا رَحِيمِ القَلب،
+الَّتي بِها يَزُورُنا فيها المَشرِقُ مِنَ العَلاء،
+لِيُضِيءَ لِلجالِسِينَ في الظُّلمَةِ وَظِلِّ المَوت،
+وَيُسَدِّدَ أَقدامَنا في طَرِيقِ السَّلام.`;
+
+    // Season-keyed closing collects — Roman Rite Liturgy of the Hours
+    const ENDING_PRAYERS = {
+      lent: {
+        en: `Lord our God, renew us by your Holy Spirit.
+Forgive us our sins, and, as we walk the way of repentance,
+bring us to the fullness of your glory.
+We ask this through our Lord Jesus Christ, your Son,
+who lives and reigns with you in the unity of the Holy Spirit,
+God, for ever and ever.
+Amen.`,
+        ar: `أيُّها الرَّبُّ إِلَهُنا، جَدِّدنا بِرُوحِكَ القُدُّوس.
+اغفِر لَنا خَطايانا، وَاهدِنا في مَسِيرَةِ التَّوبَةِ
+إِلى مَلءِ مَجدِك.
+نَطلُبُ ذَلِكَ بِوَساطَةِ رَبِّنا يَسُوعَ المَسِيح، ابنِك،
+الَّذي يَعِيشُ وَيَملِكُ مَعَكَ في وَحدَةِ الرُّوحِ القُدُّوس،
+إِلهاً إِلى أَبَدِ الآبِدِين.
+آمِين.`
+      },
+      advent: {
+        en: `Father in heaven, our hearts desire the warmth of your love,
+and our minds are searching for the light of your Word.
+Increase our longing for Christ our Saviour,
+and give us the strength to grow in love,
+that the dawn of his coming may find us rejoicing in his presence
+and welcoming the light of his truth.
+We ask this in the name of Jesus the Lord.
+Amen.`,
+        ar: `أَيُّها الآبُ السَّمَاوِيّ، قُلُوبُنَا تَشتَاقُ إِلَى دِفءِ مَحَبَّتِك،
+وَعُقُولُنَا تَسعَى إِلَى نُورِ كَلِمَتِك.
+زِد فِينَا الاشتِيَاقَ إِلَى المَسِيحِ مُخَلِّصِنَا،
+وَأَعطِنَا القُوَّةَ لِنَنمُوَ في المَحَبَّة،
+حَتَّى يَجِدَنَا فَجرُ قُدُومِهِ فَرِحِينَ بِحُضُورِه.
+بِاسمِ يَسُوعَ الرَّبّ.
+آمِين.`
+      },
+      christmas: {
+        en: `Father, you sent your Word to take our nature
+and to suffer death in our human nature.
+May we share his resurrection,
+being born again in the Spirit through grace.
+We ask this through our Lord Jesus Christ, your Son,
+who lives and reigns with you and the Holy Spirit,
+God, for ever and ever.
+Amen.`,
+        ar: `أَيُّها الآب، أَرسَلتَ كَلِمَتَكَ لِيَتَّخِذَ طَبِيعَتَنَا
+وَيَموتَ بِها عَنَّا.
+فَليَكُن لَنَا نَصِيبٌ في قِيامَتِهِ،
+مَولُودِينَ مِنَ الرُّوحِ بِالنِّعمَة.
+نَطلُبُ ذَلِكَ بِوَساطَةِ رَبِّنا يَسُوعَ المَسِيح، ابنِك،
+الَّذي يَعِيشُ وَيَملِكُ مَعَكَ وَمَعَ الرُّوحِ القُدُّوس،
+إِلهاً إِلى أَبَدِ الآبِدِين.
+آمِين.`
+      },
+      easter: {
+        en: `Father, by the love of your Spirit,
+may we who have experienced the grace of the Lord's resurrection
+rise in the light of joy to the praise of your glory.
+We ask this through our Lord Jesus Christ, your Son,
+who lives and reigns with you and the Holy Spirit,
+God, for ever and ever.
+Amen.`,
+        ar: `أَيُّها الآب، بِمَحَبَّةِ رُوحِك،
+لِيَنهَض مَن خَبِرُوا نِعمَةَ قِيامَةِ الرَّبِّ
+في نُورِ الفَرَحِ لِتَسبِيحِ مَجدِك.
+نَطلُبُ ذَلِكَ بِوَساطَةِ رَبِّنا يَسُوعَ المَسِيح، ابنِك،
+الَّذي يَعِيشُ وَيَملِكُ مَعَكَ وَمَعَ الرُّوحِ القُدُّوس،
+إِلهاً إِلى أَبَدِ الآبِدِين.
+آمِين.`
+      },
+      ordinary: {
+        en: `Father, you are the light of the faithful
+and the strength of those who labour.
+From the rising of the sun to its setting, praise be to you.
+In your goodness, watch over us this day;
+may all our thoughts, words and actions begin in you,
+and through you be brought to completion.
+We ask this through our Lord Jesus Christ, your Son,
+who lives and reigns with you and the Holy Spirit,
+God, for ever and ever.
+Amen.`,
+        ar: `أَيُّها الآب، أَنتَ نُورُ المُؤمِنِينَ وَقُوَّةُ العَامِلِين.
+مِن شُرُوقِ الشَّمسِ إِلى غُرُوبِها، المَجدُ لَك.
+في صَلاحِك، اِحرُسنَا في هَذا اليَوم؛
+لِتَبدَأ جَمِيعُ أَفكارِنا وَأَقوالِنا وَأَعمالِنا مِنك،
+وَبِكَ تَبلُغَ تَمَامَها.
+نَطلُبُ ذَلِكَ بِوَساطَةِ رَبِّنا يَسُوعَ المَسِيح، ابنِك،
+الَّذي يَعِيشُ وَيَملِكُ مَعَكَ وَمَعَ الرُّوحِ القُدُّوس،
+إِلهاً إِلى أَبَدِ الآبِدِين.
+آمِين.`
+      }
+    };
+
+    // ── Closing Dismissal ─────────────────────────────────────────────────────
+    // Fixed blessing that ends every Morning Prayer when no priest is present.
+    // Source: GILH § 54; The Liturgy of the Hours (ICEL) — individual recitation.
+    // This text is ALWAYS the same — it frames the daily changing collect.
+    const DISMISSAL_EN = `May the Lord bless us,
+protect us from all evil
+and bring us to everlasting life.
+— Amen.`;
+
+    const DISMISSAL_AR = `لِيُبارِكنا الرَّبُّ،
+وَيَحفَظنا مِن كلِّ شرٍّ،
+وَيُبلِّغنا الحياةَ الأبديَّة.
+— آمين.`;
+
+    /**
+     * Returns the full Introduction Prayer for Morning Prayer in the correct
+     * Roman Rite order:
+     *   Part 1 — Liturgical versicles: "Lord, open my lips" + Gloria Patri
+     *   Part 2 — Alleluia (omitted during Lent)
+     *   Part 3 — Daily Hymn (changes every day per Roman Calendar)
+     *            OR the static Morning Opening Prayer as fallback
+     *
+     * @param {string} dailyHymn  Hymn text from iBreviary/Universalis (may be empty)
+     */
+    function buildMorningIntro(dateKey, isAr, dailyHymn = '') {
+      const versicles = isAr ? INTRO_AR : INTRO_EN;
+      const season    = estimateSeasonFromDate(dateKey);
+      const sKey      = season.season.toLowerCase();
+      const inLent    = sKey.includes('lent') || sKey.includes('صوم');
+      const alleluia  = inLent ? '' : (isAr ? ALLELUIA_AR : ALLELUIA_EN);
+      const hymn      = dailyHymn || (isAr ? MORNING_OPENING_AR : MORNING_OPENING_EN);
+      // Correct Roman Rite Lauds order: versicles → Alleluia → Hymn
+      return versicles + alleluia + '\n\n' + hymn;
+    }
+
+    /**
+     * Returns the Benedictus (Canticle of Zechariah, Luke 1:68-79).
+     * Fixed biblical text — recited every morning in the Liturgy of the Hours.
+     */
+    function buildMorningCanticle(isAr) {
+      return isAr ? BENEDICTUS_AR : BENEDICTUS_EN;
+    }
+
+    /**
+     * Returns the season-appropriate concluding collect for Morning Prayer.
+     */
+    function buildEndingPrayer(dateKey, isAr) {
+      const season = estimateSeasonFromDate(dateKey);
+      const sKey = season.season.toLowerCase();
+      let key = 'ordinary';
+      if (sKey.includes('lent') || sKey.includes('صوم'))       key = 'lent';
+      else if (sKey.includes('advent') || sKey.includes('مجيء')) key = 'advent';
+      else if (sKey.includes('christmas') || sKey.includes('ميلاد')) key = 'christmas';
+      else if (sKey.includes('easter') || sKey.includes('فصح')) key = 'easter';
+      return ENDING_PRAYERS[key][isAr ? 'ar' : 'en'];
+    }
+
+    /**
+     * Assembles the Morning Prayer block from Evangelizo data.
+     * Structure: Opening (liturgical title) → Psalm → Gospel → Closing (reflection)
+     */
+    function buildMorningOpening(d, isAr) {
+      if (!d.liturgic) return '';
+      return d.liturgic;
+    }
+
+    function buildMorningPsalms(d) {
+      if (!d.psText) return '';
+      return d.psRef ? `${d.psRef}\n\n${d.psText}` : d.psText;
+    }
+
+    function buildMorningClosing(d, isAr) {
+      if (!d.commentText) return '';
+      const parts = [];
+      if (d.commentTitle) parts.push(`"${d.commentTitle}"`);
+      parts.push(d.commentText);
+      if (d.commentAuthor) {
+        const dash = isAr ? '—' : '—';
+        parts.push(`${dash} ${d.commentAuthor}`);
+      }
+      return parts.join('\n\n');
+    }
+
+    /**
+     * Assembles the Evening Prayer block.
+     * Uses: Evening psalm (same day psalm re-read as vespers) + full reflection.
+     */
+    function buildEveningPrayer(d, isAr) {
+      const parts = [];
+
+      // Evening psalm
+      if (d.psText) {
+        const header = isAr ? 'مزمور المساء' : 'Evening Psalm';
+        const ref    = d.psRef ? ` · ${d.psRef}` : '';
+        parts.push(`${header}${ref}\n\n${d.psText}`);
+      }
+
+      // Evening reflection (same theological commentary, re-read at day's end)
+      if (d.commentText) {
+        if (d.commentTitle) parts.push(`"${d.commentTitle}"`);
+        parts.push(d.commentText);
+        if (d.commentAuthor) parts.push(`— ${d.commentAuthor}`);
+      }
+
+      return parts.join('\n\n');
+    }
+
+    /**
+     * Fetches both EN (AM) and AR in parallel and assembles a fully normalised
+     * daily entry including Gospel, all readings, Morning Prayer, Evening Prayer,
+     * and Saint of the Day.
+     * Returns null if no gospel could be retrieved (API limit / network error).
+     */
+    async function buildLiveEntry(dateKey) {
+      const dateStr = dateKey.replace(/-/g, ''); // YYYY-MM-DD → YYYYMMDD
+
+      // Wave 1 — readings for both languages in parallel
+      const [en, ar, office, eveningOffice] = await Promise.all([
+        fetchLangData(dateStr, 'AM'),   // American English — Roman Ordinary Calendar (USCCB)
+        fetchLangData(dateStr, 'AR'),   // Arabic           — Roman Ordinary Calendar
+        fetchMorningOffice(dateKey),    // Real daily Lauds structure (3 psalms + collect)
+        fetchEveningOffice(dateKey),    // Real daily Vespers from iBreviary
+      ]);
+
+      // Require at least a gospel in one language to consider the fetch successful
+      if (!en.gspText && !ar.gspText) return null;
+
+      // Wave 2 — saint bios (need en.saint from wave 1 for the Arabic Wikipedia lookup)
+      const [saintBio, saintBioAr] = await Promise.all([
+        fetchSaintBio(dateStr),              // EN biography — Evangelizo archive
+        fetchSaintBioArabic(en.saint || ''), // AR biography — Wikipedia multilingual API
+      ]);
+
+      return normalizeEntry({
+        date:    dateKey,
+        feast:   en.feast  || ar.feast  || en.liturgic || ar.liturgic || '',
+        season:  en.liturgic || ar.liturgic || '',
+
+        // ── Mass Readings ───────────────────────────────────────────────
+        gospel_en:        en.gspText,  gospel_ref_en:    en.gspRef,
+        gospel_ar:        ar.gspText,  gospel_ref_ar:    ar.gspRef,
+        reading1_en:      en.r1Text,   reading1_ref_en:  en.r1Ref,
+        reading1_ar:      ar.r1Text,   reading1_ref_ar:  ar.r1Ref,
+        psalm_en:         en.psText,   psalm_ref_en:     en.psRef,
+        psalm_ar:         ar.psText,   psalm_ref_ar:     ar.psRef,
+        reading2_en:      en.r2Text,   reading2_ref_en:  en.r2Ref,
+        reading2_ar:      ar.r2Text,   reading2_ref_ar:  ar.r2Ref,
+
+        // ── Morning Prayer (Lauds) ─────────────────────────────────────
+        // Exact user-requested order:
+        // 1. Introduction Prayer
+        // 2. First Psalm
+        // 3. Second Psalm
+        // 4. Third Psalm
+        // 5. Gospel
+        // 6. Ending Prayer
+        // Intro = daily Hymn (changes every day) + fixed versicles.
+        // Falls back to the static Morning Opening Prayer if iBreviary is unavailable.
+        morning_intro_en:   buildMorningIntro(dateKey, false, office?.morning_hymn_en || ''),
+        morning_intro_ar:   buildMorningIntro(dateKey, true,  office?.morning_hymn_ar || ''),
+        // Daily Intercessions (changes every day) — used in the Ending Prayer section
+        morning_intercessions_en: office?.morning_intercessions_en || '',
+        morning_intercessions_ar: office?.morning_intercessions_ar || '',
+        morning_psalm1_en: office?.morning_psalm1_en || '',
+        morning_psalm1_ar: office?.morning_psalm1_ar || '',
+        morning_psalm1_ref_en: office?.morning_psalm1_ref_en || '',
+        morning_psalm1_ref_ar: office?.morning_psalm1_ref_ar || '',
+        morning_psalm2_en: office?.morning_psalm2_en || '',
+        morning_psalm2_ar: office?.morning_psalm2_ar || '',
+        morning_psalm2_ref_en: office?.morning_psalm2_ref_en || '',
+        morning_psalm2_ref_ar: office?.morning_psalm2_ref_ar || '',
+        morning_psalm3_en: office?.morning_psalm3_en || '',
+        morning_psalm3_ar: office?.morning_psalm3_ar || '',
+        morning_psalm3_ref_en: office?.morning_psalm3_ref_en || '',
+        morning_psalm3_ref_ar: office?.morning_psalm3_ref_ar || '',
+        morning_ending_en:  office?.morning_ending_en || buildEndingPrayer(dateKey, false),
+        morning_ending_ar:  office?.morning_ending_ar || buildEndingPrayer(dateKey, true),
+
+        // ── Evening Prayer (Vespers) ─────────────────────────────────────
+        // Priority:
+        // 1) Real iBreviary Vespers (EN + AR)
+        // 2) Legacy generated evening prayer fallback (commentary + psalm)
+        evening_prayer_en:  eveningOffice?.evening_prayer_en || buildEveningPrayer(en, false),
+        evening_prayer_ar:  eveningOffice?.evening_prayer_ar || buildEveningPrayer(ar, true),
+
+        // ── Saint of the Day ─────────────────────────────────────────────
+        // Arabic saint name: prefer Evangelizo AR, fall back to Wikipedia AR title,
+        // then fall back to English name so the card never shows empty in AR mode
+        saint_en:      en.saint,
+        saint_ar:      ar.saint || saintBioAr.name || en.saint || '',
+        saint_bio_en:  saintBio,          // EN biography — Evangelizo archive
+        saint_bio_ar:  saintBioAr.bio,    // AR biography — Wikipedia multilingual API
+      }, dateKey);
+    }
+
+    // ══════════════════════════════════════
+    // STEP 5 — FETCH & PERSIST
+    // Priority chain for the 'تنزيل من السحابة' button:
+    //  1. /data/YYYY-MM-DD.json  (local override file)
+    //  2. Evangelizo live API    (official Roman Rite calendar — EN + AR)
+    //  3. Supabase               (custom backend, if configured)
+    // After save, re-fires onDateChange → EMPTY transitions to LOADED instantly.
+    // ══════════════════════════════════════
+    async function fetchDate(dateKey) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+        console.error('[fetchDate] Invalid date key — must be YYYY-MM-DD:', dateKey);
+        return;
+      }
+
+      const ar = currentLang === 'ar';
+
+      // Evangelizo can be limited for far-future dates, but we no longer hard-stop.
+      // We still try all sources (local data → live APIs → Supabase) for every date.
+
+      setUIState(UI_STATE.LOADING, dateKey, null);
+      document.getElementById('loading').classList.add('show');
+
+      try {
+        // ── Source 1: /data/YYYY-MM-DD.json (local override) ─────────────
+        const localRes = await fetch(`data/${dateKey}.json`, {
+          headers: { 'Accept': 'application/json' }
+        }).catch(() => null);
+        if (localRes && localRes.ok) {
+          const contentType = (localRes.headers.get('content-type') || '').toLowerCase();
+          const rawText = await localRes.text();
+
+          // Netlify SPA rewrites can accidentally return index.html here.
+          // Only parse the response when it is actually JSON.
+          if (contentType.includes('application/json') || rawText.trim().startsWith('{')) {
+            try {
+              const entry = normalizeEntry(JSON.parse(rawText), dateKey);
+              persistAndShow(dateKey, entry);
+              return;
+            } catch (err) {
+              console.warn('[fetchDate] Invalid JSON from local data file:', dateKey, err);
+            }
+          } else {
+            console.warn('[fetchDate] Ignoring non-JSON /data response for', dateKey, rawText.slice(0, 120));
+          }
+        }
+
+        // ── Source 2: Evangelizo live API (EN + AR Roman Ordinary) ───────
+        // Always attempt — isReallyOnline() check inside buildLiveEntry handles
+        // genuine offline gracefully; don't block on navigator.onLine (unreliable)
+        const liveEntry = await buildLiveEntry(dateKey);
+        if (liveEntry) {
+          persistAndShow(dateKey, liveEntry);
+          return;
+        }
+
+        // ── Source 3: Supabase (custom backend fallback) ─────────────────
+        if (supabase) {
+          const { data } = await supabase
+            .from('daily_readings').select('*').eq('reading_date', dateKey).single();
+          if (data) {
+            persistAndShow(dateKey, data);
+            return;
+          }
+        }
+
+        // ── Nothing found ─────────────────────────────────────────────────
+        setUIState(UI_STATE.EMPTY, dateKey, null);
+        const errNote = document.createElement('p');
+        errNote.style.cssText = 'text-align:center;color:var(--crimson-700);font-size:0.8rem;margin-top:12px;padding:0 16px';
+        errNote.textContent = ar
+          ? 'تعذّر تحميل القراءات. يرجى التحقق من الاتصال والمحاولة مرة أخرى.'
+          : 'Could not load readings. Please check your connection and try again.';
+        document.getElementById('home-preview').appendChild(errNote);
+
+      } catch(e) {
+        console.error('[fetchDate] error:', e);
+        setUIState(UI_STATE.EMPTY, dateKey, null);
+      } finally {
+        document.getElementById('loading').classList.remove('show');
+      }
+    }
+
+    /** Saves an entry to localStorage + localCache, then refreshes the UI. */
+    function persistAndShow(dateKey, entry) {
+      localCache[dateKey] = entry;
+      localStorage.setItem('readings_cache', JSON.stringify(localCache));
+      onDateChange(dateKey);   // re-fires the effect → LOADED state
+      renderCalendar();        // mark day as has-data in grid
+    }
+
+    /**
+     * Normalises any raw data object (local JSON, Evangelizo assembled object,
+     * or Supabase row) into the internal field schema the rendering layer uses.
+     */
+    /**
+     * Returns true only if the text contains real scripture content.
+     * Rejects empty values AND values that are nothing but API boilerplate
+     * (e.g. old cached entries that stored the copyright footer as "reading2").
+     * A real reading must have at least one line longer than 40 characters
+     * that isn't a copyright/attribution line.
+     */
+    function hasReading(text) {
+      if (!text) return false;
+      return text.split('\n')
+        .map(l => l.trim())
+        .some(l => l.length > 40 && !isAttr(l) && !/^copyright\s/i.test(l));
+    }
+
+    function normalizeEntry(raw, dateKey) {
+      return {
+        reading_date:       dateKey,
+        feast:              raw.feast              || raw.season          || raw.liturgic_t || '',
+        gospel_en:          raw.gospel_en          || '',
+        gospel_ar:          raw.gospel_ar          || '',
+        gospel_ref_en:      raw.gospel_ref_en      || raw.gospel_ref      || '',
+        gospel_ref_ar:      raw.gospel_ref_ar      || raw.gospel_ref      || '',
+        reading1_en:        raw.reading1_en        || '',
+        reading1_ar:        raw.reading1_ar        || '',
+        reading1_ref_en:    raw.reading1_ref_en    || raw.reading1_ref    || '',
+        reading1_ref_ar:    raw.reading1_ref_ar    || raw.reading1_ref    || '',
+        psalm_en:           raw.psalm_en           || '',
+        psalm_ar:           raw.psalm_ar           || '',
+        psalm_ref_en:       raw.psalm_ref_en       || raw.psalm_ref       || '',
+        psalm_ref_ar:       raw.psalm_ref_ar       || raw.psalm_ref       || '',
+        reading2_en:        hasReading(raw.reading2_en)     ? raw.reading2_en     : '',
+        reading2_ar:        hasReading(raw.reading2_ar)     ? raw.reading2_ar     : '',
+        reading2_ref_en:    hasReading(raw.reading2_en)     ? (raw.reading2_ref_en || raw.reading2_ref || '') : '',
+        reading2_ref_ar:    hasReading(raw.reading2_ar)     ? (raw.reading2_ref_ar || raw.reading2_ref || '') : '',
+        morning_prayer_en:   raw.morning_prayer_en   || raw.prayer_en || '',
+        morning_prayer_ar:   raw.morning_prayer_ar   || raw.prayer_ar || '',
+        morning_intro_en:    raw.morning_intro_en    || '',
+        morning_intro_ar:    raw.morning_intro_ar    || '',
+        morning_intercessions_en: raw.morning_intercessions_en || '',
+        morning_intercessions_ar: raw.morning_intercessions_ar || '',
+        morning_psalm1_en:   raw.morning_psalm1_en   || '',
+        morning_psalm1_ar:   raw.morning_psalm1_ar   || '',
+        morning_psalm1_ref_en: raw.morning_psalm1_ref_en || raw.morning_psalm1_ref || '',
+        morning_psalm1_ref_ar: raw.morning_psalm1_ref_ar || raw.morning_psalm1_ref || '',
+        morning_psalm2_en:   raw.morning_psalm2_en   || '',
+        morning_psalm2_ar:   raw.morning_psalm2_ar   || '',
+        morning_psalm2_ref_en: raw.morning_psalm2_ref_en || raw.morning_psalm2_ref || '',
+        morning_psalm2_ref_ar: raw.morning_psalm2_ref_ar || raw.morning_psalm2_ref || '',
+        morning_psalm3_en:   raw.morning_psalm3_en   || '',
+        morning_psalm3_ar:   raw.morning_psalm3_ar   || '',
+        morning_psalm3_ref_en: raw.morning_psalm3_ref_en || raw.morning_psalm3_ref || '',
+        morning_psalm3_ref_ar: raw.morning_psalm3_ref_ar || raw.morning_psalm3_ref || '',
+        morning_opening_en:  raw.morning_opening_en  || '',
+        morning_opening_ar:  raw.morning_opening_ar  || '',
+        morning_psalms_en:   raw.morning_psalms_en   || '',
+        morning_psalms_ar:   raw.morning_psalms_ar   || '',
+        morning_canticle_en: raw.morning_canticle_en || '',
+        morning_canticle_ar: raw.morning_canticle_ar || '',
+        morning_closing_en:  raw.morning_closing_en  || '',
+        morning_closing_ar:  raw.morning_closing_ar  || '',
+        morning_ending_en:   raw.morning_ending_en   || '',
+        morning_ending_ar:   raw.morning_ending_ar   || '',
+        evening_prayer_en:  raw.evening_prayer_en  || '',
+        evening_prayer_ar:  raw.evening_prayer_ar  || '',
+        saint_en:           raw.saint_en           || '',
+        saint_ar:           raw.saint_ar           || '',
+        saint_bio_en:       raw.saint_bio_en       || '',
+        saint_bio_ar:       raw.saint_bio_ar       || '',
+      };
+    }
+
+    function setSyncStatus(online, text) {
+      const dot = document.getElementById('status-dot');
+      if (dot) dot.className = 'status-dot' + (online === false ? ' offline' : '');
+      const el = document.getElementById('sync-text');
+      if (el) el.textContent = text;
+    }
+
+    // ══════════════════════════════════════
+    // UTILITIES
+    // ══════════════════════════════════════
+    function fmtDate(date) {
+      if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+      const d = date instanceof Date ? date : new Date(date);
+      return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+    }
+
+    function setGreeting() {
+      const h = new Date().getHours();
+      const ar = currentLang === 'ar';
+      let g;
+      if (h < 12)      g = ar ? 'صباح الخير ☀️' : 'Good Morning';
+      else if (h < 17) g = ar ? 'مساء النور ☀️'  : 'Good Afternoon';
+      else             g = ar ? 'مساء الخير 🌙'   : 'Good Evening';
+      const el = document.getElementById('hero-greeting');
+      if (el) el.textContent = g;
+    }
+
+    /**
+     * Real connectivity check.
+     * navigator.onLine is unreliable — it returns true on LANs, VPNs, and
+     * proxies even when there is no actual internet access.
+     * Rule: navigator.onLine === false  → definitely offline (reliable)
+     *       navigator.onLine === true   → possibly online; verify with a
+     *                                     HEAD request to our own server.
+     */
+    async function isReallyOnline() {
+      if (!navigator.onLine) return false;
+      try {
+        // HEAD request to our own manifest — tiny, fast, same-origin
+        const r = await fetch('manifest.json', {
+          method: 'HEAD',
+          cache:  'no-store',
+          signal: AbortSignal.timeout(4000),
+        });
+        return r.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    function checkOnline() {
+      const toast = document.getElementById('offline-toast');
+
+      const update = async () => {
+        const on = await isReallyOnline();
+        toast.classList.toggle('show', !on);
+        if (on) {
+          syncWithSupabase();
+        } else {
+          setSyncStatus(false, currentLang === 'ar' ? 'غير متصل' : 'Offline');
+        }
+      };
+
+      window.addEventListener('online',  update);
+      window.addEventListener('offline', update);
+      update();
+    }
+
+    function registerSW() {
+      if (!('serviceWorker' in navigator)) return;
+
+      navigator.serviceWorker.register('./service-worker.js').then((reg) => {
+
+        // If a new SW is already waiting (installed but not yet active),
+        // tell it to skip waiting and activate right away.
+        if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+
+        // Watch for any future SW update found during this session.
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          if (!newSW) return;
+          newSW.addEventListener('statechange', () => {
+            // New SW finished installing and is waiting — activate it now.
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              newSW.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+
+      }).catch(() => {});
+
+      // When the controller changes (new SW took over), reload once so the
+      // page gets fresh HTML — prevents stale cached pages after updates.
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!reloading) { reloading = true; window.location.reload(); }
+      });
+    }
+  </script>
+
+</body>
+</html>
